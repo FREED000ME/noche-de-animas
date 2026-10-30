@@ -1,0 +1,61 @@
+{
+  "titulo": "Día 2: La cañada",
+  "celda": 3,
+  "mapa": [
+    "###############",
+    "#P.....R......#",
+    "#.....###..C..#",
+    "#.C..T...T....#",
+    "#....#####..E.#",
+    "#..E.#.C.#....#",
+    "#....#...#..C.#",
+    "#.T..##.##..T.#",
+    "#..C.....E....#",
+    "#..........C.M#",
+    "###############"
+  ],
+  "leyenda": [
+    {
+      "simbolo": "E",
+      "tipo": "enemigo",
+      "modelo": "",
+      "vida": 2,
+      "escala": 1,
+      "color": "",
+      "nombre": "",
+      "seguir": false,
+      "dialogo": [],
+      "voz": "",
+      "aura": "",
+      "fantasma": false,
+      "clave": false,
+      "desvanecer": false,
+      "arma": ""
+    }
+  ],
+  "jugador": {
+    "modelo": "",
+    "vida": 5,
+    "arma": ""
+  },
+  "intro": [],
+  "salida": [],
+  "recompensa_arma": "",
+  "recompensa_nombre": "",
+  "recompensa_dialogo": [],
+  "capitulo": "",
+  "narracion": [],
+  "transicion": "",
+  "meta_modelo": "",
+  "terreno": {
+    "tipo": "piedra",
+    "colinas": 0.3,
+    "semilla": 7
+  },
+  "objetivo": "monedas",
+  "cielo": "#8ec9f0",
+  "niebla": false,
+  "altura_muros": 3,
+  "color_muros": "#8c8478",
+  "ambiente": "limbo"
+}
