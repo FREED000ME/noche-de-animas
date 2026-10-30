@@ -1,0 +1,78 @@
+{
+  "titulo": "Noche 2: Los callejones",
+  "celda": 3,
+  "mapa": [
+    "###############",
+    "#P..#....K....#",
+    "#.#.#.###.###.#",
+    "#.#...#.....#.#",
+    "#.###.#.#E#.#.#",
+    "#...E...#.#...#",
+    "###.#####.#.###",
+    "#C..#.....#..C#",
+    "#.#.#.#####.#.#",
+    "#...E.......EM#",
+    "###############"
+  ],
+  "leyenda": [
+    {
+      "simbolo": "E",
+      "tipo": "enemigo",
+      "modelo": "",
+      "vida": 3,
+      "escala": 1,
+      "color": "",
+      "nombre": "",
+      "seguir": false,
+      "dialogo": [],
+      "voz": "",
+      "aura": "",
+      "fantasma": false,
+      "clave": false,
+      "desvanecer": false,
+      "arma": ""
+    },
+    {
+      "simbolo": "K",
+      "tipo": "enemigo",
+      "modelo": "",
+      "vida": 8,
+      "escala": 1.6,
+      "color": "",
+      "nombre": "",
+      "seguir": false,
+      "dialogo": [],
+      "voz": "",
+      "aura": "",
+      "fantasma": false,
+      "clave": false,
+      "desvanecer": false,
+      "arma": ""
+    }
+  ],
+  "jugador": {
+    "modelo": "",
+    "vida": 5,
+    "arma": ""
+  },
+  "intro": [],
+  "salida": [],
+  "recompensa_arma": "",
+  "recompensa_nombre": "",
+  "recompensa_dialogo": [],
+  "capitulo": "",
+  "narracion": [],
+  "transicion": "",
+  "meta_modelo": "",
+  "terreno": {
+    "tipo": "piedra",
+    "colinas": 0,
+    "semilla": 11
+  },
+  "objetivo": "meta",
+  "cielo": "#8ec9f0",
+  "niebla": true,
+  "altura_muros": 4,
+  "color_muros": "#8c8478",
+  "ambiente": "tormenta"
+}
