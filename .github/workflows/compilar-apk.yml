@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # para borrar los artefactos de compilaciones anteriores
 
 concurrency:
   group: compilar-apk-${{ github.ref_name }}
@@ -101,7 +102,7 @@ jobs:
         with:
           name: juego
           path: ${{ steps.apk.outputs.archivo }}
-          retention-days: 30
+          retention-days: 1   # copia de respaldo: el APK queda en el Release
 
       - name: Publicar Release con el APK
         uses: softprops/action-gh-release@v2
@@ -111,3 +112,30 @@ jobs:
           body: "${{ inputs.formato == 'aab' && 'AAB firmado para Google Play' || 'APK para instalar en tu Android' }} generado por Forja3D (${{ steps.apk.outputs.tam }})."
           files: ${{ steps.apk.outputs.archivo }}
           make_latest: true
+
+      # Solo se guarda el APK/AAB más reciente de cada proyecto (rama): borra los Releases y
+      # artefactos de compilaciones anteriores de ESTA rama para no llenar el espacio de GitHub.
+      # Va después de publicar, así que nunca se queda sin ninguno. Si falla, no tumba la compilación.
+      - name: Borrar compilaciones anteriores (solo se guarda la más reciente)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RAMA: ${{ github.ref_name }}
+          ACTUAL: ${{ github.run_number }}
+        run: |
+          R="$GITHUB_REPOSITORY"
+          # Números de compilación de esta rama (otros proyectos pueden vivir en otras ramas del repo)
+          gh api -X GET "repos/$R/actions/workflows/compilar-apk.yml/runs" -f branch="$RAMA" -f per_page=100 \
+            --paginate -q '.workflow_runs[].run_number' | sort -u > runs_rama.txt
+          gh api "repos/$R/releases?per_page=100" --paginate \
+            -q '.[].tag_name | select(startswith("apk-")) | ltrimstr("apk-")' | sort -u > releases.txt
+          for N in $(comm -12 runs_rama.txt releases.txt); do
+            [ "$N" = "$ACTUAL" ] && continue
+            gh release delete "apk-$N" -R "$R" --cleanup-tag --yes && echo "🗑️ Release apk-$N borrado"
+          done
+          gh api -X GET "repos/$R/actions/artifacts" -f name=juego -f per_page=100 --paginate \
+            -q ".artifacts[] | select(.workflow_run.head_branch == \"$RAMA\" and .workflow_run.id != $GITHUB_RUN_ID) | .id" |
+            while read -r A; do
+              gh api -X DELETE "repos/$R/actions/artifacts/$A" && echo "🗑️ Artefacto $A borrado"
+            done
+          rm -f runs_rama.txt releases.txt
