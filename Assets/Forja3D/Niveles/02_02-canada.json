@@ -35,7 +35,7 @@
   ],
   "jugador": {
     "modelo": "",
-    "vida": 5,
+    "vida": 10,
     "arma": ""
   },
   "intro": [],
@@ -43,9 +43,18 @@
   "recompensa_arma": "",
   "recompensa_nombre": "",
   "recompensa_dialogo": [],
-  "capitulo": "",
-  "narracion": [],
-  "transicion": "",
+  "capitulo": "Día 2",
+  "narracion": [
+    {
+      "quien": "",
+      "texto": "En la cañada quedó una escopeta de tubo y suministros desperdigados."
+    },
+    {
+      "quien": "",
+      "texto": "Recógelos todos. Cuidado con los que escupen: no se acercan, no lo necesitan."
+    }
+  ],
+  "transicion": "El sol se esconde detrás del cerro. Esta noche no hay forma de volver por arriba: toca cruzar los callejones.",
   "meta_modelo": "",
   "terreno": {
     "tipo": "piedra",

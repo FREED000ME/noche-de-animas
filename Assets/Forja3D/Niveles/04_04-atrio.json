@@ -52,7 +52,7 @@
   ],
   "jugador": {
     "modelo": "",
-    "vida": 5,
+    "vida": 10,
     "arma": ""
   },
   "intro": [],
@@ -60,9 +60,18 @@
   "recompensa_arma": "",
   "recompensa_nombre": "",
   "recompensa_dialogo": [],
-  "capitulo": "",
-  "narracion": [],
-  "transicion": "",
+  "capitulo": "Noche de Ánimas",
+  "narracion": [
+    {
+      "quien": "",
+      "texto": "El Sacristán toca la campana y los muertos acuden a su llamado."
+    },
+    {
+      "quien": "",
+      "texto": "Haz callar esa campana. Usa todo lo que tengas: hasta el último cohete."
+    }
+  ],
+  "transicion": "La campana calla. Por primera vez en siete noches, San Ánimas duerme en silencio.",
   "meta_modelo": "",
   "terreno": {
     "tipo": "piedra",

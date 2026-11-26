@@ -35,7 +35,7 @@
   ],
   "jugador": {
     "modelo": "",
-    "vida": 5,
+    "vida": 10,
     "arma": ""
   },
   "intro": [],
@@ -43,9 +43,18 @@
   "recompensa_arma": "",
   "recompensa_nombre": "",
   "recompensa_dialogo": [],
-  "capitulo": "",
-  "narracion": [],
-  "transicion": "",
+  "capitulo": "Día 1",
+  "narracion": [
+    {
+      "quien": "",
+      "texto": "San Ánimas del Cerro, 2 de noviembre de 1994. Los muertos no volvieron a sus tumbas."
+    },
+    {
+      "quien": "",
+      "texto": "Solo tienes una resortera, una pistola hechiza y el mercado lleno de ellos. No avisan: solo atacan."
+    }
+  ],
+  "transicion": "Volviste a la capilla con los bolsillos llenos de canicas y balas. Mañana hay que bajar a la cañada.",
   "meta_modelo": "",
   "terreno": {
     "tipo": "arena",

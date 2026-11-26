@@ -28,6 +28,27 @@ namespace Forja3D
         public static bool CorrerActivo;        // botón CORRER (alterna)
         static int saltoFrame = -10, ataqueFrame = -10, esquivaFrame = -10;
 
+        // ── Noche de Ánimas: shooter ──
+        // Con ModoDisparo el combate cuerpo a cuerpo de la plantilla queda apagado (ATACAR/CUBRIR no responden).
+        public static bool ModoDisparo = true;
+        public static bool DispararTactil;      // botón DISPARAR mantenido
+        static int recargaFrame = -10, cambioArmaFrame = -10;
+        public static void PulsarRecarga() => recargaFrame = Time.frameCount;
+        public static void PulsarCambioArma() => cambioArmaFrame = Time.frameCount;
+        public static bool Disparar => DispararTactil || (!EsTactil && Input.GetMouseButton(0));
+        public static bool Recargar => Pulso(ref recargaFrame) || (!EsTactil && Input.GetKeyDown(KeyCode.R));
+        public static bool CambiarArma => Pulso(ref cambioArmaFrame) || (!EsTactil && Input.GetKeyDown(KeyCode.Tab));
+        // Teclas 1-6 (PC): arma directa; -1 = ninguna
+        public static int ArmaDirecta
+        {
+            get
+            {
+                if (EsTactil) return -1;
+                for (int i = 0; i < 6; i++) if (Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha1 + i))) return i;
+                return -1;
+            }
+        }
+
         // PC con pantalla táctil también cuenta como táctil.
         public static bool EsTactil => Application.isMobilePlatform || Input.touchCount > 0;
 
@@ -51,10 +72,10 @@ namespace Forja3D
         }
 
         public static bool Correr => CorrerActivo || (!EsTactil && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)));
-        public static bool Cubrir => CubrirTactil || (!EsTactil && (Input.GetMouseButton(1) && Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.Q)));
+        public static bool Cubrir => !ModoDisparo && (CubrirTactil || (!EsTactil && (Input.GetMouseButton(1) && Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.Q))));
 
         public static bool Saltar => Pulso(ref saltoFrame) || (!EsTactil && Input.GetKeyDown(KeyCode.Space));
-        public static bool Atacar => Pulso(ref ataqueFrame) || (!EsTactil && Input.GetMouseButtonDown(0));
+        public static bool Atacar => !ModoDisparo && (Pulso(ref ataqueFrame) || (!EsTactil && Input.GetMouseButtonDown(0)));
         public static bool Esquivar => Pulso(ref esquivaFrame) || (!EsTactil && (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.LeftAlt)));
 
         public static Vector2 Mirar
@@ -74,6 +95,6 @@ namespace Forja3D
             frame = -10; return true;
         }
 
-        public static void Reiniciar() { JoystickTactil = MiradaTactil = Vector2.zero; CubrirTactil = CorrerActivo = false; }
+        public static void Reiniciar() { JoystickTactil = MiradaTactil = Vector2.zero; CubrirTactil = CorrerActivo = DispararTactil = false; }
     }
 }

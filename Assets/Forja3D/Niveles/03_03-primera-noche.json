@@ -52,7 +52,7 @@
   ],
   "jugador": {
     "modelo": "",
-    "vida": 5,
+    "vida": 10,
     "arma": ""
   },
   "intro": [],
@@ -60,9 +60,18 @@
   "recompensa_arma": "",
   "recompensa_nombre": "",
   "recompensa_dialogo": [],
-  "capitulo": "",
-  "narracion": [],
-  "transicion": "",
+  "capitulo": "Noche 2",
+  "narracion": [
+    {
+      "quien": "",
+      "texto": "De noche los callejones se llenan de niebla y de gritos."
+    },
+    {
+      "quien": "",
+      "texto": "Si oyes llorar a una plañidera, mátala rápido: su grito despierta a los demás."
+    }
+  ],
+  "transicion": "Desde la capilla se oye una campana. Alguien la está tocando en el atrio de la iglesia.",
   "meta_modelo": "",
   "terreno": {
     "tipo": "piedra",

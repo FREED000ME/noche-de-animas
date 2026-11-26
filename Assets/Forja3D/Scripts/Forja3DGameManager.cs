@@ -20,6 +20,10 @@ namespace Forja3D
         [TextArea] public string transicion; // pergamino final: hacia dónde va Dante
 
         public static bool Terminado { get; private set; }
+        // Condición adicional para cruzar la meta (Noche de Ánimas: sobrevivir a todas las oleadas)
+        public static System.Func<bool> CondicionExtra;
+        public static string MotivoExtra = "";
+        public static string ExtraVictoria;
         // Bloquea al jugador y a los enemigos (fin del nivel o diálogo abierto)
         public static bool Bloqueado => Terminado || Forja3DDialogue.Activo || Forja3DPergamino.Activo;
         static Forja3DGameManager inst;
@@ -67,6 +71,7 @@ namespace Forja3D
         public static void MetaAlcanzada()
         {
             if (inst == null || Terminado) return;
+            if (CondicionExtra != null && !CondicionExtra()) { inst.Aviso(MotivoExtra); return; }
             if (inst.objetivo == Objetivo.Meta || inst.Cumplido()) inst.Ganar();
             else inst.Aviso(inst.objetivo == Objetivo.Enemigos ? "¡Derrota a todos los enemigos primero!" : inst.objetivo == Objetivo.Jefe ? "¡Derrota al jefe primero!" : inst.objetivo == Objetivo.Dialogos ? "La puerta no se abre… escucha antes a las almas de este círculo" : "¡Recoge todas las monedas primero!");
         }
@@ -75,7 +80,7 @@ namespace Forja3D
         {
             // EXPANSIÓN FUTURA: en PC conviene un menú de pausa (Escape), opciones de gráficos y resolución;
             // en iOS/Android, pausar al salir de la app (OnApplicationPause). Hoy el juego no tiene menú.
-            inst = this; Terminado = false;
+            inst = this; Terminado = false; CondicionExtra = null; MotivoExtra = ""; ExtraVictoria = null;
             enemigos = derrotados = monedas = recogidas = jefes = jefesDerrotados = claves = clavesOidas = 0; vidasJefe.Clear(); nombresJefe.Clear();
             Time.timeScale = 1f;
             Application.targetFrameRate = 60; // PC: dejar -1 y usar QualitySettings.vSyncCount = 1
@@ -127,7 +132,7 @@ namespace Forja3D
             _ => true,
         };
 
-        void Revisar() { if (Cumplido() && objetivo != Objetivo.Meta) Aviso("¡Objetivo cumplido! Ve a la meta"); }
+        void Revisar() { if (Cumplido() && objetivo != Objetivo.Meta && (CondicionExtra == null || CondicionExtra())) Aviso("¡Objetivo cumplido! Ve a la meta"); }
 
         void Update()
         {
@@ -183,11 +188,11 @@ namespace Forja3D
             Forja3DProgreso.Ganar(50, "nivel");
             PlayerPrefs.Save();
             Forja3DAudio.Sonar("victoria", null, 0.6f, 0f);
-            string texto = !string.IsNullOrEmpty(transicion) ? transicion : hayMas ? "Y el camino siguió, hacia abajo, siempre hacia abajo." : "Aquí termina esta parte del viaje.";
-            string extra = $"Experiencia ganada en este canto: {Forja3DProgreso.XPEnEsteNivel}";
-            Forja3DPergamino.Mostrar(hayMas ? "Y siguieron su camino" : "Fin de esta parte del viaje", texto,
-                hayMas ? "— toca para seguir el viaje —" : "— toca para volver al inicio —",
-                () => SceneManager.LoadScene(hayMas ? SceneManager.GetActiveScene().buildIndex + 1 : 0), extra, true);
+            string texto = !string.IsNullOrEmpty(transicion) ? transicion : hayMas ? "La noche termina. Al amanecer habrá que volver a salir." : "Amanece en San Ánimas. Por ahora, los muertos descansan.";
+            string extra = ExtraVictoria;
+            Forja3DPergamino.Mostrar(hayMas ? "Sobreviviste a la noche" : "Fin de la Noche de Ánimas", texto,
+                hayMas ? "— toca para seguir —" : "— toca para volver al inicio —",
+                () => SceneManager.LoadScene(hayMas ? SceneManager.GetActiveScene().buildIndex + 1 : 0), extra, false);
         }
 
         void Perder()
@@ -199,8 +204,8 @@ namespace Forja3D
         System.Collections.IEnumerator PergaminoDerrota()
         {
             yield return new WaitForSecondsRealtime(1.6f);
-            Forja3DPergamino.Mostrar("Has caído", "Y caí como cae un cuerpo muerto.\n\nPero aún no es tu hora, Dante: el camino te espera donde lo dejaste.",
-                "— toca para levantarte —", () => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex), null, true);
+            Forja3DPergamino.Mostrar("Los muertos te alcanzaron", "Esta noche te sumaste a ellos.\n\nPero San Ánimas todavía te necesita: vuelve a intentarlo.",
+                "— toca para levantarte —", () => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex), null, false);
         }
 
         void MostrarFinal(string titulo, string boton, UnityEngine.Events.UnityAction accion)
@@ -237,6 +242,7 @@ namespace Forja3D
             textoXP = Texto(canvasGo.transform, "", 30, TextAnchor.UpperLeft); textoXP.supportRichText = true;
             textoXP.rectTransform.offsetMin = new Vector2(50, 0); textoXP.rectTransform.offsetMax = new Vector2(-40, -118);
             textoXP.color = new Color(0.92f, 0.85f, 0.7f);
+            textoXP.gameObject.SetActive(false); textoXP = null; // Noche de Ánimas no usa la experiencia de Dante
             // Barra del jefe (abajo al centro)
             marcoJefe = new GameObject("Jefe", typeof(RectTransform)); marcoJefe.transform.SetParent(canvasGo.transform, false);
             var rj = marcoJefe.GetComponent<RectTransform>(); rj.anchorMin = rj.anchorMax = new Vector2(0.5f, 0); rj.sizeDelta = new Vector2(1000, 90); rj.anchoredPosition = new Vector2(0, 60);
