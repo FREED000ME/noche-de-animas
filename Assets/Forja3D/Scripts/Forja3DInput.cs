@@ -32,6 +32,8 @@ namespace Forja3D
         // Con ModoDisparo el combate cuerpo a cuerpo de la plantilla queda apagado (ATACAR/CUBRIR no responden).
         public static bool ModoDisparo = true;
         public static bool DispararTactil;      // botón DISPARAR mantenido
+        public static bool AccionTactil;        // botón ACCIÓN mantenido (usar, armar)
+        public static bool Accion => AccionTactil || (!EsTactil && Input.GetKey(KeyCode.F));
         static int recargaFrame = -10, cambioArmaFrame = -10;
         public static void PulsarRecarga() => recargaFrame = Time.frameCount;
         public static void PulsarCambioArma() => cambioArmaFrame = Time.frameCount;
@@ -95,6 +97,6 @@ namespace Forja3D
             frame = -10; return true;
         }
 
-        public static void Reiniciar() { JoystickTactil = MiradaTactil = Vector2.zero; CubrirTactil = CorrerActivo = DispararTactil = false; }
+        public static void Reiniciar() { JoystickTactil = MiradaTactil = Vector2.zero; CubrirTactil = CorrerActivo = DispararTactil = AccionTactil = false; }
     }
 }

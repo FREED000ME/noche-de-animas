@@ -33,10 +33,13 @@ namespace NocheDeAnimas
         Vector3 posCuerpo;
 
         public bool Muerto => muerto;
-        public Vector3 Pecho => transform.position + Vector3.up * (1.2f * transform.lossyScale.y);
+        public float Escala { get; private set; } = 1f;
+        public Vector3 Pecho => transform.position + Vector3.up * (1.2f * Escala);
+        // La cabeza es el último sexto del cuerpo
+        public bool EsCabeza(Vector3 punto) => punto.y - transform.position.y > 1.55f * Escala;
 
         // ───────── Creación ─────────
-        public static NAZombie Crear(TipoZombie tipo, Vector3 pos, bool emerger)
+        public static NAZombie Crear(TipoZombie tipo, Vector3 pos, bool emerger, float multVida = 1f)
         {
             var g = new GameObject("Zombie_" + tipo);
             g.transform.position = pos;
@@ -63,7 +66,8 @@ namespace NocheDeAnimas
                 case TipoZombie.Sacristan: vidaMax = 90; z.velocidad = 2.3f; z.rango = 3.0f; z.danio = 2; z.enfriamiento = 2.0f; z.esJefe = true; break;
                 default: vidaMax = 4; z.velocidad = 2.1f; z.rango = 1.5f; z.danio = 1; z.enfriamiento = 1.3f; break;
             }
-            h.vidaMaxima = vidaMax;
+            z.Escala = escala;
+            h.vidaMaxima = Mathf.Max(1, Mathf.RoundToInt(vidaMax * (z.esJefe ? 1f : multVida)));
             h.Curar(9999); // Health ya hizo Awake con la vida por defecto: la llena hasta el máximo nuevo
             ag.speed = z.velocidad;
             ag.stoppingDistance = z.rango * 0.7f;
@@ -430,7 +434,8 @@ namespace NocheDeAnimas
                 Forja3DGameManager.JefeDerrotado();
             }
             NAOleadas.ZombieMuerto(this);
-            NASuministro.TalVezSoltar(transform.position, esJefe ? 1f : tipo == TipoZombie.Compadre ? 0.8f : 0.3f);
+            if (!esJefe) NAPoderes.TalVezSoltar(transform.position);
+            NASuministro.TalVezSoltar(transform.position, esJefe ? 1f : tipo == TipoZombie.Compadre ? 0.6f : 0.12f);
             StartCoroutine(Caer());
         }
 

@@ -2,47 +2,48 @@
   "titulo": "Día 1: El mercado",
   "celda": 3,
   "mapa": [
-    "###############",
-    "#P....#.......#",
-    "#.##..#..C..T.#",
-    "#.#C..........#",
-    "#.#...##.##...#",
-    "#.....#C..#.E.#",
-    "#..R..#...#...#",
-    "#.....##.##...#",
-    "#..C.......E..#",
-    "#.T......R...M#",
-    "###############"
+    "#########################",
+    "#P..W....######....a....#",
+    "#........######.........#",
+    "#..F.....bBBBBB...SS.SS.#",
+    "###...........F...SS.SS.#",
+    "#1....SS.SS.............#",
+    "#.....SS.SS....####..4..#",
+    "#..............####.....#",
+    "#####.....F.....c##..F..#",
+    "#####...SS.SS.......SS..#",
+    "#..2....SS.SS....5..SS..#",
+    "#...........###.........#",
+    "#..F...d....###....F..6.#",
+    "#.......3...###.........#",
+    "#....C..........C.......#",
+    "#..................F...M#",
+    "#########################"
   ],
+  "objetivo": "meta",
+  "ambiente": "selva",
+  "niebla": false,
+  "cielo": "#f2b27a",
+  "terreno": {
+    "tipo": "arena",
+    "colinas": 0.7,
+    "semilla": 2
+  },
+  "altura_muros": 0.3,
+  "color_muros": "#a0785a",
+  "jugador": {
+    "vida": 10
+  },
   "leyenda": [
     {
-      "simbolo": "E",
-      "tipo": "enemigo",
-      "modelo": "",
-      "vida": 2,
-      "escala": 1,
-      "color": "",
-      "nombre": "",
-      "seguir": false,
-      "dialogo": [],
-      "voz": "",
-      "aura": "",
-      "fantasma": false,
-      "clave": false,
-      "desvanecer": false,
-      "arma": ""
+      "simbolo": "X",
+      "tipo": "muro"
+    },
+    {
+      "simbolo": "B",
+      "tipo": "muro"
     }
   ],
-  "jugador": {
-    "modelo": "",
-    "vida": 10,
-    "arma": ""
-  },
-  "intro": [],
-  "salida": [],
-  "recompensa_arma": "",
-  "recompensa_nombre": "",
-  "recompensa_dialogo": [],
   "capitulo": "Día 1",
   "narracion": [
     {
@@ -51,20 +52,12 @@
     },
     {
       "quien": "",
-      "texto": "Solo tienes una resortera, una pistola hechiza y el mercado lleno de ellos. No avisan: solo atacan."
+      "texto": "El portón del mercado está cerrado con candado. La llave la guardaba don Chema en la bodega."
+    },
+    {
+      "quien": "",
+      "texto": "Junta piezas para armar algo mejor que una resortera. Los muertos no avisan: solo atacan."
     }
   ],
-  "transicion": "Volviste a la capilla con los bolsillos llenos de canicas y balas. Mañana hay que bajar a la cañada.",
-  "meta_modelo": "",
-  "terreno": {
-    "tipo": "arena",
-    "colinas": 0.1,
-    "semilla": 2
-  },
-  "objetivo": "meta",
-  "cielo": "#8ec9f0",
-  "niebla": false,
-  "altura_muros": 3,
-  "color_muros": "#8c8478",
-  "ambiente": "selva"
+  "transicion": "Con la llave del portón saliste del mercado. Abajo espera la cañada."
 }

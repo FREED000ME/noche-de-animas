@@ -1,6 +1,6 @@
-// Noche de Ánimas — director de oleadas. Los muertos salen de la tierra por todo el mapa,
-// lejos del jugador y sin avisar; cada oleada trae más y de más tipos. Al superar todas,
-// se abre el camino de vuelta al refugio (la meta del nivel).
+// Noche de Ánimas — director de oleadas INFINITAS. Los muertos salen de la tierra por todo el mapa,
+// lejos del jugador y sin avisar; cada oleada trae más, de más tipos y con más vida.
+// No se acaban nunca: la única salida es completar la misión del mapa y llegar con la llave.
 using System.Collections.Generic;
 using Forja3D;
 using UnityEngine;
@@ -14,9 +14,8 @@ namespace NocheDeAnimas
         public NivelConfig cfg = new NivelConfig();
 
         public int Oleada { get; private set; }
-        public int Total => cfg.oleadas;
-        public bool Completado { get; private set; }
-        public bool EnPausa => !enCurso && !Completado;
+        public bool EnPausa => !enCurso;
+        public float MultVida => 1f + 0.1f * Mathf.Max(0, Oleada - 1);
         public int Matados { get; private set; }
         public int Restantes => porSalir + deOleada.Count;
         public float SegundosParaLaSiguiente => Mathf.Max(0f, pausaHasta - Time.time);
@@ -34,21 +33,17 @@ namespace NocheDeAnimas
 
         void Start()
         {
-            Forja3DGameManager.CondicionExtra = () => Completado;
-            Forja3DGameManager.MotivoExtra = "¡Sobrevive a todas las oleadas primero!";
             PrepararMalla();
             pausaHasta = Time.time + 4f;
         }
 
         void Update()
         {
-            if (Completado) return;
             if (Forja3DGameManager.Bloqueado) { if (!enCurso) pausaHasta = Mathf.Max(pausaHasta, Time.time + 3f); return; }
 
             if (!enCurso)
             {
                 if (Time.time < pausaHasta) return;
-                if (Oleada >= cfg.oleadas) { Completar(); return; }
                 NuevaOleada();
                 return;
             }
@@ -62,7 +57,6 @@ namespace NocheDeAnimas
             if (porSalir == 0 && deOleada.Count == 0)
             {
                 enCurso = false;
-                if (Oleada >= cfg.oleadas) { Completar(); return; }
                 pausaHasta = Time.time + cfg.pausaEntreOleadas;
                 Forja3DGameManager.Mensaje($"OLEADA {Oleada} SUPERADA");
             }
@@ -74,15 +68,8 @@ namespace NocheDeAnimas
             enCurso = true;
             porSalir = cfg.zombiesBase + (Oleada - 1) * cfg.zombiesPorOleada;
             proximaSalida = Time.time + 0.5f;
-            Forja3DGameManager.Mensaje(Oleada == cfg.oleadas ? $"ÚLTIMA OLEADA" : $"OLEADA {Oleada} DE {cfg.oleadas}");
-        }
-
-        void Completar()
-        {
-            Completado = true;
-            enCurso = false;
-            Forja3DGameManager.Mensaje("¡SOBREVIVISTE!");
-            Forja3DGameManager.ExtraVictoria = $"Muertos devueltos a su descanso: {Matados}";
+            NASonido.Sonar("campana", null, 0.7f, 0.6f);
+            Forja3DGameManager.Mensaje($"OLEADA {Oleada}");
         }
 
         TipoZombie Elegir()
@@ -103,7 +90,7 @@ namespace NocheDeAnimas
         void Salir()
         {
             if (!Punto(11f, 999f, out var p)) return;
-            var z = NAZombie.Crear(Elegir(), p, true);
+            var z = NAZombie.Crear(Elegir(), p, true, MultVida);
             deOleada.Add(z);
             porSalir--;
         }
@@ -115,7 +102,7 @@ namespace NocheDeAnimas
             for (int i = 0; i < cuantos; i++)
             {
                 if (NAZombie.Vivos.Count >= Inst.cfg.maxVivos + 6) return;
-                if (Inst.Punto(7f, 16f, out var p)) NAZombie.Crear(tipo, p, true);
+                if (Inst.Punto(7f, 16f, out var p)) NAZombie.Crear(tipo, p, true, Inst.MultVida);
             }
         }
 
@@ -124,6 +111,7 @@ namespace NocheDeAnimas
             if (!Inst) return;
             Inst.Matados++;
             Inst.deOleada.Remove(z);
+            Forja3DGameManager.ExtraVictoria = $"Oleadas resistidas: {Inst.Oleada}  ·  Muertos devueltos a su descanso: {Inst.Matados}  ·  Puntos: {NAPuntos.Puntos}";
         }
 
         // ── Puntos al azar sobre la malla de navegación ──

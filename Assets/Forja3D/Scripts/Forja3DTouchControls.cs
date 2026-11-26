@@ -73,6 +73,8 @@ namespace Forja3D
                 CrearBoton("ESQUIVAR", new Vector2(-230, 500), 165, new Color(0.3f, 0.75f, 0.55f, 0.65f), Forja3DInput.PulsarEsquiva);
                 CrearBoton("ARMA", new Vector2(-480, 400), 150, new Color(0.25f, 0.55f, 0.95f, 0.6f), Forja3DInput.PulsarCambioArma);
                 CrearBoton("CORRER", new Vector2(-740, 120), 135, new Color(0.6f, 0.6f, 0.65f, 0.55f), Forja3DInput.AlternarCorrer, null, () => Forja3DInput.CorrerActivo);
+                CrearBoton("ACCIÓN", new Vector2(-740, 330), 160, new Color(0.95f, 0.55f, 0.15f, 0.65f),
+                    () => Forja3DInput.AccionTactil = true, () => Forja3DInput.AccionTactil = false);
                 return;
             }
             CrearBoton("ATACAR", new Vector2(-220, 230), 230, new Color(0.85f, 0.22f, 0.18f, 0.72f), Forja3DInput.PulsarAtaque);
@@ -226,6 +228,6 @@ namespace Forja3D
             if (fondo) { fondo.anchoredPosition = posReposo; fondo.GetComponent<Image>().color = new Color(1, 1, 1, 0.15f); }
         }
 
-        void OnDisable() { Forja3DInput.JoystickTactil = Vector2.zero; Forja3DInput.CubrirTactil = false; Forja3DInput.DispararTactil = false; }
+        void OnDisable() { Forja3DInput.JoystickTactil = Vector2.zero; Forja3DInput.CubrirTactil = false; Forja3DInput.DispararTactil = false; Forja3DInput.AccionTactil = false; }
     }
 }

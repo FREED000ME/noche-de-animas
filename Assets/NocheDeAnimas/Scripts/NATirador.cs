@@ -1,7 +1,8 @@
-// Noche de Ánimas — armas del jugador: disparo con asistencia de puntería (pensado para el móvil),
-// munición por tipo, cargador y recarga. Las armas son caseras y se arman con piezas simples.
-//   DISPARAR (mantener) · RECARGAR · ARMA (cambia) · ESQUIVAR · CORRER
-//   PC: clic izquierdo dispara · R recarga · Tab o 1-6 cambia de arma
+// Noche de Ánimas — armas del jugador en primera persona: se dispara hacia la mira (con una pequeña
+// ayuda de puntería para el móvil), tiros a la cabeza al doble, munición por tipo, cargador y recarga.
+// Se empieza con la resortera; las demás armas caseras se arman con piezas (NAArmado).
+//   DISPARAR (mantener) · RECARGAR · ARMA (cambia) · ESQUIVAR · CORRER · ACCIÓN
+//   PC: ratón mira · clic dispara · R recarga · Tab o 1-6 cambia de arma · F acción
 using System.Collections;
 using System.Collections.Generic;
 using Forja3D;
@@ -26,15 +27,15 @@ namespace NocheDeAnimas
         readonly int[] reserva = new int[6];
         readonly List<GameObject> modelos = new List<GameObject>();
         int actual;
-        float proximoDisparo, apuntarHasta, finRecarga, lentoHasta, baseTrote, baseCorrer;
+        float proximoDisparo, finRecarga, lentoHasta, baseTrote, baseCorrer, patada, balanceo, cambioHasta;
         bool recargando;
-        Vector3 apuntarDir, empuje;
+        Vector3 empuje;
         Coroutine recarga;
 
         CharacterController cc;
         Forja3DHealth vida;
         Forja3DPlayerController control;
-        Transform mano;
+        Transform vista, mano;
         Light fogonazo;
 
         public ArmaDef Arma => armas.Count > 0 ? armas[actual] : null;
@@ -43,6 +44,8 @@ namespace NocheDeAnimas
         public bool Recargando => recargando;
         public float ProgresoRecarga => recargando && Arma != null ? 1f - Mathf.Clamp01((finRecarga - Time.time) / Arma.recarga) : 0f;
         public bool Infinita => Arma != null && Arma.municion == Municion.Canicas;
+        public bool Tiene(string id) { foreach (var a in armas) if (a.id == id) return true; return false; }
+        public bool TieneArmasConMunicion { get { foreach (var a in armas) if (a.municion != Municion.Canicas) return true; return false; } }
 
         void Awake()
         {
@@ -53,42 +56,50 @@ namespace NocheDeAnimas
             if (control) { baseTrote = control.velocidadTrote; baseCorrer = control.velocidadCorrer; }
         }
 
-        void OnDestroy() { if (Instancia == this) Instancia = null; }
+        void OnDestroy() { if (Instancia == this) Instancia = null; if (vista) Destroy(vista.gameObject); }
 
+        // Empieza con la resortera y con las armas que ya armó en mapas anteriores
         public void Configurar(NivelConfig cfg)
         {
-            armas.Clear();
-            for (int i = 0; i < Mathf.Min(cfg.armasDisponibles, NADatos.Armas.Length); i++) armas.Add(NADatos.Armas[i]);
-            for (int i = 0; i < reserva.Length; i++) reserva[i] = i < cfg.reservaInicial.Length ? cfg.reservaInicial[i] : 0;
+            var cam = Camera.main ? Camera.main.transform : transform;
+            vista = new GameObject("VistaArma").transform;
+            vista.SetParent(cam, false);
+            mano = new GameObject("Mano").transform;
+            mano.SetParent(vista, false);
+            var fl = new GameObject("Fogonazo"); fl.transform.SetParent(mano, false); fl.transform.localPosition = new Vector3(0, 0.05f, 0.75f);
+            fogonazo = fl.AddComponent<Light>(); fogonazo.type = LightType.Point; fogonazo.range = 7f; fogonazo.color = new Color(1f, 0.75f, 0.35f); fogonazo.intensity = 0f;
+
+            AgregarArma("resortera", false);
+            foreach (var id in NAArmado.Construidas()) AgregarArma(id, false);
+            actual = armas.Count - 1; // la mejor que tenga
+            MostrarModelo();
+        }
+
+        public void AgregarArma(string id, bool equipar)
+        {
+            if (Tiene(id)) { if (equipar) LlenarTodo(); return; }
+            var a = NADatos.Buscar(id);
+            if (a == null) return;
+            armas.Add(a);
+            enCargador[a.id] = a.cargador;
+            if (a.municion != Municion.Canicas) reserva[(int)a.municion] = Mathf.Max(reserva[(int)a.municion], a.cargador * 3);
+            var m = NAModelosArma.Crear(a.id, mano);
+            m.SetActive(false);
+            modelos.Add(m);
+            if (equipar) Cambiar(armas.Count - 1);
+        }
+
+        // Munición máxima: cargadores llenos y reserva al tope
+        public void LlenarTodo()
+        {
             foreach (var a in armas)
             {
-                int r = reserva[(int)a.municion];
-                int carga = a.municion == Municion.Canicas ? a.cargador : Mathf.Min(a.cargador, r);
-                enCargador[a.id] = carga;
-                if (a.municion != Municion.Canicas) reserva[(int)a.municion] -= carga;
+                enCargador[a.id] = a.cargador;
+                if (a.municion != Municion.Canicas) reserva[(int)a.municion] = Mathf.Max(reserva[(int)a.municion], Maximo(a));
             }
-            mano = new GameObject("ManoArma").transform;
-            mano.SetParent(transform, false);
-            mano.localPosition = new Vector3(0.34f, 1.18f, 0.32f);
-            foreach (var a in armas) { var m = NAModelosArma.Crear(a.id, mano); m.SetActive(false); modelos.Add(m); }
-            // Empieza con la mejor arma que tenga munición
-            actual = 0;
-            for (int i = armas.Count - 1; i >= 0; i--) if (enCargador[armas[i].id] > 0 && armas[i].municion != Municion.Canicas) { actual = i; break; }
-            MostrarModelo();
-            Sombrero();
-
-            var fl = new GameObject("Fogonazo"); fl.transform.SetParent(mano, false); fl.transform.localPosition = new Vector3(0, 0.05f, 0.7f);
-            fogonazo = fl.AddComponent<Light>(); fogonazo.type = LightType.Point; fogonazo.range = 7f; fogonazo.color = new Color(1f, 0.75f, 0.35f); fogonazo.intensity = 0f;
         }
 
-        // Identidad del protagonista sin generar modelos: sombrero de palma
-        void Sombrero()
-        {
-            var ala = NAMat.Pieza(PrimitiveType.Cylinder, transform, new Vector3(0, 1.98f, 0), new Vector3(0.95f, 0.02f, 0.95f), NAMat.Hex("#c9a45c"));
-            NAMat.Pieza(PrimitiveType.Cylinder, transform, new Vector3(0, 2.1f, 0), new Vector3(0.45f, 0.12f, 0.45f), NAMat.Hex("#b8914a"));
-            NAMat.Pieza(PrimitiveType.Cylinder, transform, new Vector3(0, 2.03f, 0), new Vector3(0.47f, 0.025f, 0.47f), NAMat.Hex("#7a2a1a"));
-            ala.name = "Sombrero";
-        }
+        static int Maximo(ArmaDef a) => a.cargador * 5 + NADatos.Caja(a.municion) * 2;
 
         void MostrarModelo()
         {
@@ -97,7 +108,6 @@ namespace NocheDeAnimas
 
         void Update()
         {
-            // Empujones (golpes de área, embestidas)
             if (empuje.sqrMagnitude > 0.01f && cc && cc.enabled)
             {
                 cc.Move(empuje * Time.deltaTime);
@@ -109,17 +119,26 @@ namespace NocheDeAnimas
 
             int directa = Forja3DInput.ArmaDirecta;
             if (directa >= 0 && directa < armas.Count && directa != actual) Cambiar(directa);
-            else if (Forja3DInput.CambiarArma) Cambiar((actual + 1) % armas.Count);
+            else if (Forja3DInput.CambiarArma && armas.Count > 1) Cambiar((actual + 1) % armas.Count);
 
             if (Forja3DInput.Recargar) EmpezarRecarga();
-            if (Forja3DInput.Disparar && Time.time >= proximoDisparo) IntentarDisparo();
+            bool gatillo = Forja3DInput.Disparar && !Forja3DInput.Accion;
+            if (!Forja3DInput.EsTactil && Cursor.lockState != CursorLockMode.Locked) gatillo = false; // el primer clic captura el ratón
+            if (gatillo && Time.time >= proximoDisparo) IntentarDisparo();
         }
 
+        // Arma en la mano: balanceo al caminar, patada al disparar y se baja al recargar o cambiar
         void LateUpdate()
         {
-            // Mientras dispara, mira hacia el objetivo (después del movimiento del controlador)
-            if (Time.time < apuntarHasta && apuntarDir.sqrMagnitude > 0.01f)
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(apuntarDir), 25f * Time.deltaTime);
+            if (!vista) return;
+            float vel = NACamaraFP.Inst ? NACamaraFP.Inst.Velocidad : 0f;
+            balanceo += Time.deltaTime * (vel > 0.5f ? 9f : 1.5f);
+            float amp = vel > 0.5f ? 0.012f : 0.003f;
+            patada = Mathf.MoveTowards(patada, 0f, Time.deltaTime * 1.2f);
+            float baja = recargando ? Mathf.Sin(ProgresoRecarga * Mathf.PI) * 0.18f : 0f;
+            if (Time.time < cambioHasta) baja += (cambioHasta - Time.time) / 0.3f * 0.25f;
+            vista.localPosition = new Vector3(0.2f + Mathf.Cos(balanceo) * amp, -0.22f + Mathf.Abs(Mathf.Sin(balanceo)) * amp - baja, 0.38f - patada);
+            vista.localRotation = Quaternion.Euler(-patada * 60f + baja * 120f, 0, recargando ? baja * 80f : 0f);
         }
 
         void Cambiar(int i)
@@ -128,7 +147,8 @@ namespace NocheDeAnimas
             recargando = false;
             actual = i;
             MostrarModelo();
-            proximoDisparo = Time.time + 0.25f;
+            proximoDisparo = Time.time + 0.3f;
+            cambioHasta = Time.time + 0.3f;
             NASonido.Sonar("recarga", transform.position + Vector3.up, 0.4f, 1.4f);
             Forja3DGameManager.Mensaje(Arma.nombre);
         }
@@ -151,38 +171,46 @@ namespace NocheDeAnimas
             proximoDisparo = Time.time + a.cadencia;
             enCargador[a.id] = Cargado - 1;
 
-            var boca = mano.TransformPoint(new Vector3(0, 0.05f, 0.75f));
-            var origen = transform.position + Vector3.up * 1.25f;
-            var objetivo = BuscarObjetivo(a.alcance);
-            Vector3 dir;
-            if (objetivo) dir = (objetivo.Pecho - origen).normalized;
-            else
-            {
-                var cam = Camera.main ? Camera.main.transform.forward : transform.forward;
-                dir = Vector3.ProjectOnPlane(cam, Vector3.up).normalized;
-                if (dir.sqrMagnitude < 0.01f) dir = transform.forward;
-            }
-            apuntarDir = new Vector3(dir.x, 0, dir.z); apuntarHasta = Time.time + 0.45f;
-            transform.rotation = Quaternion.LookRotation(apuntarDir); // gira al instante: el tiro sale hacia donde mira
+            var cam = Camera.main ? Camera.main.transform : transform;
+            var origen = cam.position;
+            var dir = Asistir(origen, cam.forward, a.alcance);
+            var boca = mano.TransformPoint(new Vector3(0, 0.05f, 0.6f));
 
             NASonido.Sonar(a.sonido, boca, 0.9f);
             Forja3DAudio.EnCombate();
             StartCoroutine(Fogonazo(a));
-            Forja3DFX.Temblor(a.retroceso * 0.35f, 0.08f);
+            patada = Mathf.Clamp(0.03f + a.retroceso * 0.25f, 0f, 0.14f);
+            if (NACamaraFP.Inst) NACamaraFP.Inst.Retroceso(a.retroceso);
 
-            if (a.proyectil) NAProyectil.Disparar(a, boca, Dispersar(dir, a.dispersion), transform);
-            else for (int i = 0; i < a.perdigones; i++) Rayo(a, origen, boca, Dispersar(dir, a.dispersion));
+            if (a.proyectil) NAProyectil.Disparar(a, origen + dir * 0.4f, Dispersar(dir, a.dispersion * 0.5f), transform);
+            else for (int i = 0; i < a.perdigones; i++) Rayo(a, origen, boca, Dispersar(dir, a.dispersion * 0.6f));
 
             if (Cargado <= 0 && (Reserva > 0 || Infinita)) EmpezarRecarga();
         }
 
+        // Ayuda de puntería para el móvil: si la mira está casi encima de un zombie, el tiro va a él.
+        // Si ya apunta a un zombie (cabeza incluida), no toca nada.
+        Vector3 Asistir(Vector3 origen, Vector3 dir, float alcance)
+        {
+            if (Physics.Raycast(origen, dir, out var h, alcance, ~0, QueryTriggerInteraction.Ignore) && h.collider.GetComponentInParent<NAZombie>()) return dir;
+            NAZombie mejor = null; float mejorAng = 7f;
+            foreach (var z in NAZombie.Vivos)
+            {
+                if (!z || z.Muerto) continue;
+                var v = z.Pecho - origen;
+                if (v.magnitude > alcance) continue;
+                float ang = Vector3.Angle(dir, v);
+                if (ang < mejorAng && LineaLibre(origen, z)) { mejorAng = ang; mejor = z; }
+            }
+            return mejor ? (mejor.Pecho - origen).normalized : dir;
+        }
+
         static Vector3 Dispersar(Vector3 dir, float grados)
         {
-            var q = Quaternion.Euler(Random.Range(-grados, grados) * 0.5f, Random.Range(-grados, grados), 0);
+            var q = Quaternion.Euler(Random.Range(-grados, grados) * 0.5f, Random.Range(-grados, grados) * 0.5f, 0);
             return (Quaternion.LookRotation(dir) * q * Vector3.forward).normalized;
         }
 
-        // Disparo instantáneo: impacta al primer zombie (o atraviesa varios) y se detiene en el escenario
         void Rayo(ArmaDef a, Vector3 origen, Vector3 boca, Vector3 dir)
         {
             var hits = Physics.RaycastAll(origen, dir, a.alcance, ~0, QueryTriggerInteraction.Ignore);
@@ -197,7 +225,7 @@ namespace NocheDeAnimas
                 if (z)
                 {
                     if (z.Muerto || !golpeados.Add(z)) continue;
-                    Impactar(z, a.danio, dir, h.point);
+                    Impactar(z, a.danio, dir, h.point, z.EsCabeza(h.point));
                     if (++atravesados > a.atraviesa) { fin = h.point; break; }
                     continue;
                 }
@@ -208,35 +236,22 @@ namespace NocheDeAnimas
             NATrazo.Dibujar(boca, fin, a.id == "resortera" ? new Color(0.8f, 0.8f, 0.85f) : new Color(1f, 0.85f, 0.45f));
         }
 
-        public static void Impactar(NAZombie z, int danio, Vector3 dir, Vector3 punto)
+        // Daño a un zombie: cabeza ×2, INSTA-KILL mata de un golpe (menos al jefe); da puntos
+        public static void Impactar(NAZombie z, int danio, Vector3 dir, Vector3 punto, bool cabeza = false)
         {
             var h = z.GetComponent<Forja3DHealth>();
             if (!h || h.Muerto) return;
-            if (!h.Danio(danio, NAJugador.Transform)) return;
-            Forja3DFX.Sangre(punto, dir, 10 + danio * 3);
-            z.Empujar(dir, 1.5f + danio);
-        }
-
-        // Asistencia de puntería: el zombie visible más alineado con la cámara (o con el jugador)
-        NAZombie BuscarObjetivo(float alcance)
-        {
-            var cam = Camera.main ? Camera.main.transform.forward : transform.forward;
-            var refs = new[] { Vector3.ProjectOnPlane(cam, Vector3.up).normalized, transform.forward };
-            var ojo = transform.position + Vector3.up * 1.25f;
-            NAZombie mejor = null; float mejorPuntos = float.MaxValue;
-            foreach (var z in NAZombie.Vivos)
+            int d = cabeza ? danio * 2 : danio;
+            if (NAPoderes.InstaKill && !z.esJefe) d = 99999;
+            if (!h.Danio(d, NAJugador.Transform)) return;
+            Forja3DFX.Sangre(punto, dir, 10 + Mathf.Min(d, 10) * 3);
+            z.Empujar(dir, 1.5f + Mathf.Min(d, 8));
+            if (h.Muerto)
             {
-                if (!z || z.Muerto) continue;
-                var v = z.Pecho - ojo; float d = v.magnitude;
-                if (d > alcance) continue;
-                var plano = new Vector3(v.x, 0, v.z);
-                float ang = Mathf.Min(Vector3.Angle(refs[0], plano), Vector3.Angle(refs[1], plano));
-                if (ang > 65f && d > 3f) continue;
-                if (!LineaLibre(ojo, z)) continue;
-                float puntos = ang * 0.06f + d * 0.05f;
-                if (puntos < mejorPuntos) { mejorPuntos = puntos; mejor = z; }
+                NAPuntos.Muerte(cabeza);
+                if (cabeza) { NASonido.Sonar("cabeza", punto, 0.9f); Forja3DFX.Sangre(punto, Vector3.up, 30); }
             }
-            return mejor;
+            else NAPuntos.Acierto();
         }
 
         bool LineaLibre(Vector3 ojo, NAZombie z)
@@ -294,7 +309,9 @@ namespace NocheDeAnimas
         public void DarMunicion(Municion m, int cantidad)
         {
             if (m == Municion.Canicas) return;
-            reserva[(int)m] += cantidad;
+            int tope = 0;
+            foreach (var a in armas) if (a.municion == m) tope = Mathf.Max(tope, Maximo(a));
+            reserva[(int)m] = Mathf.Min(reserva[(int)m] + cantidad, Mathf.Max(tope, reserva[(int)m]));
         }
 
         public void Empujar(Vector3 dir, float fuerza) { dir.y = 0; if (dir.sqrMagnitude > 0.001f) empuje = dir.normalized * fuerza; }
@@ -356,7 +373,7 @@ namespace NocheDeAnimas
                 if (z)
                 {
                     golpeados.Add(z);
-                    NATirador.Impactar(z, arma.danio, dir, h.point);
+                    NATirador.Impactar(z, arma.danio, dir, h.point, z.EsCabeza(h.point));
                     if (++atravesados > arma.atraviesa) { Destroy(gameObject); return; }
                     continue;
                 }

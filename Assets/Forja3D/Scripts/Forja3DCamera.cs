@@ -23,6 +23,14 @@ namespace Forja3D
             tiembla = fuerza; tiemblaDur = Mathf.Max(0.01f, duracion); tiemblaHasta = Time.unscaledTime + duracion;
         }
 
+        // Desplazamiento de temblor de este frame (para cámaras propias que desactivan esta)
+        public Vector3 Sacudida()
+        {
+            if (Time.unscaledTime >= tiemblaHasta) return Vector3.zero;
+            float k = (tiemblaHasta - Time.unscaledTime) / tiemblaDur;
+            return Random.insideUnitSphere * tiembla * k;
+        }
+
         void Start() { if (objetivo) yaw = objetivo.eulerAngles.y; }
 
         void LateUpdate()

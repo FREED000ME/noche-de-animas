@@ -2,69 +2,58 @@
   "titulo": "Día 2: La cañada",
   "celda": 3,
   "mapa": [
-    "###############",
-    "#P.....R......#",
-    "#.....###..C..#",
-    "#.C..T...T....#",
-    "#....#####..E.#",
-    "#..E.#.C.#....#",
-    "#....#...#..C.#",
-    "#.T..##.##..T.#",
-    "#..C.....E....#",
-    "#..........C.M#",
-    "###############"
+    "#########################",
+    "#P.W.....T....##....a...#",
+    "#........R....##........#",
+    "###..T......#####...T...#",
+    "###.....a...#####.......#",
+    "#....##..............R..#",
+    "#.1..##....T....##......#",
+    "#........b......##..4...#",
+    "#..T.......R............#",
+    "####..........T....##...#",
+    "####...2....##.....##.5.#",
+    "#...........##..........#",
+    "#..R...T.......a....T...#",
+    "#.....3...c.........R...#",
+    "#...##.........6....##..#",
+    "#...##..T...........##.M#",
+    "#########################"
   ],
+  "objetivo": "meta",
+  "ambiente": "selva",
+  "niebla": false,
+  "cielo": "#e9a46a",
+  "terreno": {
+    "tipo": "piedra",
+    "colinas": 0.9,
+    "semilla": 7
+  },
+  "altura_muros": 3,
+  "color_muros": "#7d6a58",
+  "jugador": {
+    "vida": 10
+  },
   "leyenda": [
     {
-      "simbolo": "E",
-      "tipo": "enemigo",
-      "modelo": "",
-      "vida": 2,
-      "escala": 1,
-      "color": "",
-      "nombre": "",
-      "seguir": false,
-      "dialogo": [],
-      "voz": "",
-      "aura": "",
-      "fantasma": false,
-      "clave": false,
-      "desvanecer": false,
-      "arma": ""
+      "simbolo": "X",
+      "tipo": "muro"
+    },
+    {
+      "simbolo": "B",
+      "tipo": "muro"
     }
   ],
-  "jugador": {
-    "modelo": "",
-    "vida": 10,
-    "arma": ""
-  },
-  "intro": [],
-  "salida": [],
-  "recompensa_arma": "",
-  "recompensa_nombre": "",
-  "recompensa_dialogo": [],
   "capitulo": "Día 2",
   "narracion": [
     {
       "quien": "",
-      "texto": "En la cañada quedó una escopeta de tubo y suministros desperdigados."
+      "texto": "La cañada se inundó. La llave de la mina quedó en el fondo del pozo."
     },
     {
       "quien": "",
-      "texto": "Recógelos todos. Cuidado con los que escupen: no se acercan, no lo necesitan."
+      "texto": "Junta gasolina, llena el generador de la bomba y aguanta mientras saca el agua."
     }
   ],
-  "transicion": "El sol se esconde detrás del cerro. Esta noche no hay forma de volver por arriba: toca cruzar los callejones.",
-  "meta_modelo": "",
-  "terreno": {
-    "tipo": "piedra",
-    "colinas": 0.3,
-    "semilla": 7
-  },
-  "objetivo": "monedas",
-  "cielo": "#8ec9f0",
-  "niebla": false,
-  "altura_muros": 3,
-  "color_muros": "#8c8478",
-  "ambiente": "limbo"
+  "transicion": "El sol se esconde detrás del cerro. Esta noche toca cruzar los callejones."
 }

@@ -127,6 +127,10 @@ namespace NocheDeAnimas
                 case "golpe": dur = 0.3f; f = t => Seno(t, 70f) * Mathf.Exp(-t * 14f) + Bajo(Ruido(), 0.3f) * Mathf.Exp(-t * 20f); break;
                 case "recoger": dur = 0.22f; f = t => Seno(t, t < 0.1f ? 880f : 1320f) * Mathf.Exp(-(t % 0.11f) * 20f) * 0.5f; break;
                 case "impacto": dur = 0.1f; f = t => Bajo(Ruido(), 0.4f) * Mathf.Exp(-t * 45f); break;
+                case "poder": dur = 0.9f; f = t => (Seno(t, 523f) * (t < 0.15f ? 1f : 0f) + Seno(t, 659f) * (t >= 0.15f && t < 0.3f ? 1f : 0f) + Seno(t, 784f) * (t >= 0.3f && t < 0.45f ? 1f : 0f) + Seno(t, 1047f) * (t >= 0.45f ? Mathf.Exp(-(t - 0.45f) * 4f) : 0f)) * 0.6f; break;
+                case "construir": dur = 0.7f; f = t => (Mathf.Sin(t * 60f) > 0.6f ? Ruido() * 0.8f : 0f) * Mathf.Exp(-t * 2f) + Seno(t, 220f) * Mathf.Exp(-t * 6f) * 0.3f; break;
+                case "cabeza": dur = 0.15f; f = t => Bajo(Ruido(), 0.6f) * Mathf.Exp(-t * 30f) + Seno(t, 1400f) * Mathf.Exp(-t * 40f) * 0.4f; break;
+                case "llave": dur = 0.8f; f = t => (Seno(t, 1568f) + Seno(t, 2093f) * 0.5f) * Mathf.Exp(-t * 5f) * 0.5f; break;
                 default: return null;
             }
             int muestras = Mathf.CeilToInt(dur * Frec);
@@ -166,6 +170,8 @@ namespace NocheDeAnimas
             new ArmaDef { id = "cohetero", nombre = "COHETERO", sonido = "cohete", municion = Municion.Cohetes, danio = 9, cargador = 1, cadencia = 0.5f, recarga = 2.8f, alcance = 45f, dispersion = 1f, retroceso = 0.4f, proyectil = true, explosiva = true, velProyectil = 24f, radioExplosion = 4.2f },
         };
 
+        public static ArmaDef Buscar(string id) { foreach (var a in Armas) if (a.id == id) return a; return null; }
+
         public static string NombreMunicion(Municion m) => m switch
         {
             Municion.Canicas => "canicas", Municion.Balas => "balas", Municion.Cartuchos => "cartuchos",
@@ -184,19 +190,20 @@ namespace NocheDeAnimas
     public enum TipoZombie { Caminante, Corredor, Escupidor, Compadre, Planidera, Cuetero, Sacristan }
 
     // ───────────────────────── Configuración de cada nivel ─────────────────────────
+    // Las oleadas son infinitas: cada una trae más zombies, más tipos y más vida, hasta que escapas.
     public class NivelConfig
     {
-        public int armasDisponibles = 2;               // primeras N armas de NADatos.Armas
-        public int[] reservaInicial = { 999, 24, 0, 0, 0, 0 }; // por tipo de munición (canicas = infinitas)
         public int vidaJugador = 10;
-        public int oleadas = 3;
         public int zombiesBase = 6, zombiesPorOleada = 3;
-        public float pausaEntreOleadas = 6f;
+        public float pausaEntreOleadas = 8f;
         public int maxVivos = 14;
+        public bool noche;
         public TipoZombie tipoInicial = TipoZombie.Caminante;
-        // Peso de cada tipo en las oleadas (índice = TipoZombie); la oleada n añade tipos a partir de su índice de entrada
+        // Peso de cada tipo (índice = TipoZombie) y oleada en la que empieza a salir
         public float[] pesos = { 1f, 0f, 0f, 0f, 0f, 0f };
         public int[] entraEnOleada = { 1, 99, 99, 99, 99, 99 };
+        // Arma que se arma con las piezas "1-3" y "4-6" del mapa (null = ninguna)
+        public string armaA, armaB;
     }
 
     public static class NAConfig
@@ -206,34 +213,23 @@ namespace NocheDeAnimas
             var c = new NivelConfig();
             if (escena.StartsWith("01"))
             {
-                c.armasDisponibles = 2; c.reservaInicial = new[] { 999, 24, 0, 0, 0, 0 };
-                c.oleadas = 3; c.zombiesBase = 6; c.zombiesPorOleada = 3; c.maxVivos = 10;
-                c.pesos = new[] { 1f, 0.5f, 0f, 0f, 0f, 0.25f }; c.entraEnOleada = new[] { 1, 2, 99, 99, 99, 3 };
+                c.zombiesBase = 5; c.zombiesPorOleada = 2; c.maxVivos = 10; c.armaA = "hechiza"; c.armaB = "tubo";
+                c.pesos = new[] { 1f, 0.5f, 0.3f, 0.15f, 0.15f, 0.25f }; c.entraEnOleada = new[] { 1, 2, 4, 6, 7, 3 };
             }
             else if (escena.StartsWith("02"))
             {
-                c.armasDisponibles = 3; c.reservaInicial = new[] { 999, 30, 10, 0, 0, 0 };
-                c.oleadas = 4; c.zombiesBase = 8; c.zombiesPorOleada = 3; c.maxVivos = 12;
-                c.pesos = new[] { 1f, 0.6f, 0.4f, 0.2f, 0f, 0.3f }; c.entraEnOleada = new[] { 1, 1, 2, 4, 99, 3 };
+                c.zombiesBase = 6; c.zombiesPorOleada = 3; c.maxVivos = 12; c.armaA = "ballesta"; c.armaB = "clavos";
+                c.pesos = new[] { 1f, 0.6f, 0.4f, 0.2f, 0.2f, 0.3f }; c.entraEnOleada = new[] { 1, 1, 2, 4, 5, 3 };
             }
             else if (escena.StartsWith("03"))
             {
-                c.armasDisponibles = 5; c.reservaInicial = new[] { 999, 36, 12, 8, 90, 0 };
-                c.oleadas = 4; c.zombiesBase = 10; c.zombiesPorOleada = 4; c.maxVivos = 14;
-                c.pesos = new[] { 1f, 0.7f, 0.4f, 0.25f, 0.25f, 0.35f }; c.entraEnOleada = new[] { 1, 1, 1, 3, 2, 2 };
-            }
-            else if (escena.StartsWith("04"))
-            {
-                c.armasDisponibles = 6; c.reservaInicial = new[] { 999, 40, 14, 10, 120, 4 };
-                c.oleadas = 3; c.zombiesBase = 10; c.zombiesPorOleada = 4; c.maxVivos = 16;
-                c.pesos = new[] { 1f, 0.7f, 0.5f, 0.3f, 0.3f, 0.4f }; c.entraEnOleada = new[] { 1, 1, 1, 2, 2, 1 };
+                c.zombiesBase = 8; c.zombiesPorOleada = 3; c.maxVivos = 14; c.noche = true; c.armaA = "cohetero";
+                c.pesos = new[] { 1f, 0.7f, 0.4f, 0.25f, 0.3f, 0.35f }; c.entraEnOleada = new[] { 1, 1, 1, 3, 2, 2 };
             }
             else
             {
-                // Niveles futuros: dificultad creciente con todas las armas
-                c.armasDisponibles = 6; c.reservaInicial = new[] { 999, 40, 14, 10, 120, 4 };
-                c.oleadas = 5; c.zombiesBase = 12; c.zombiesPorOleada = 4; c.maxVivos = 18;
-                c.pesos = new[] { 1f, 0.8f, 0.5f, 0.35f, 0.3f, 0.4f }; c.entraEnOleada = new[] { 1, 1, 1, 2, 2, 1 };
+                c.zombiesBase = 9; c.zombiesPorOleada = 3; c.maxVivos = 16; c.noche = true;
+                c.pesos = new[] { 1f, 0.7f, 0.5f, 0.3f, 0.3f, 0.4f }; c.entraEnOleada = new[] { 1, 1, 1, 2, 2, 1 };
             }
             return c;
         }
