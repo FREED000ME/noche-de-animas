@@ -254,6 +254,25 @@ namespace Forja3D.EditorTools
                     d.transform.rotation = Quaternion.Euler(0, (f * 73 + col * 37) % 360, 0);
                 }
 
+            // Paredes propias del juego (p. ej. casas huecas con puertas y ventanas): si el juego trae una clase
+            // NocheDeAnimas.NACasas con Colisiones(string[] mapa, float celda), sus cajas se hornean en el NavMesh
+            var tipoParedes = AppDomain.CurrentDomain.GetAssemblies().Select(asmParedes => { try { return asmParedes.GetType("NocheDeAnimas.NACasas"); } catch { return null; } }).FirstOrDefault(tpParedes => tpParedes != null);
+            var metodoParedes = tipoParedes?.GetMethod("Colisiones", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (metodoParedes != null)
+            {
+                var cajasParedes = (Bounds[])metodoParedes.Invoke(null, new object[] { n.mapa, c });
+                foreach (var cajaPared in cajasParedes)
+                {
+                    float yParedes = terreno ? terreno.SampleHeight(new Vector3(cajaPared.center.x, 0, cajaPared.center.z)) + terreno.transform.position.y : 0f;
+                    var paredGo = new GameObject("ParedColision");
+                    paredGo.transform.SetParent(nivel.transform);
+                    paredGo.transform.position = new Vector3(cajaPared.center.x, yParedes + cajaPared.center.y, cajaPared.center.z);
+                    paredGo.AddComponent<BoxCollider>().size = cajaPared.size;
+                    GameObjectUtility.SetStaticEditorFlags(paredGo, StaticEditorFlags.NavigationStatic);
+                }
+                Debug.Log($"[Forja3D] {id}: {cajasParedes.Length} paredes de casas");
+            }
+
             // NavMesh antes de poner personajes y objetos dinámicos
             var surf = nivel.AddComponent<NavMeshSurface>();
             surf.collectObjects = CollectObjects.Children;

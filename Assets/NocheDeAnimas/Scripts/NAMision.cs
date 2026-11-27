@@ -32,9 +32,9 @@ namespace NocheDeAnimas
             if (escena.StartsWith("01"))
             {
                 l.Add(new Paso { tipo = TipoPaso.Recoger, letras = "a", visual = "manivela", texto = "Busca la manivela de la bodega", alCompletar = "TIENES LA MANIVELA" });
-                l.Add(new Paso { tipo = TipoPaso.Usar, letras = "b", visual = "cortina", segundos = 6f, refuerzos = 6, texto = "Sube la cortina de la bodega", accion = "subir la cortina", alCompletar = "DENTRO HAY UNA NOTA: LA COMBINACIÓN ESTÁ EN EL CALENDARIO" });
-                l.Add(new Paso { tipo = TipoPaso.Usar, letras = "c", visual = "calendario", segundos = 1.5f, texto = "Lee el calendario de la carnicería", accion = "leer el calendario", alCompletar = "COMBINACIÓN: 2 - 11 - 94" });
-                l.Add(new Paso { tipo = TipoPaso.Usar, letras = "d", visual = "cajafuerte", segundos = 5f, refuerzos = 8, texto = "Abre la caja fuerte de don Chema", accion = "girar la combinación", daLlave = true, alCompletar = "LLAVE DEL PORTÓN" });
+                l.Add(new Paso { tipo = TipoPaso.Usar, letras = "Q", visual = "cortina", segundos = 6f, refuerzos = 6, texto = "Sube la cortina de la bodega con la manivela", accion = "subir la cortina", alCompletar = "LA CORTINA SUBIÓ: ENTRA A LA BODEGA" });
+                l.Add(new Paso { tipo = TipoPaso.Usar, letras = "c", visual = "calendario", segundos = 1.5f, texto = "Lee el calendario de la pared de la bodega", accion = "leer el calendario", alCompletar = "COMBINACIÓN: 2 - 11 - 94" });
+                l.Add(new Paso { tipo = TipoPaso.Usar, letras = "d", visual = "cajafuerte", segundos = 5f, refuerzos = 8, texto = "Abre la caja fuerte de don Chema (2-11-94)", accion = "girar la combinación", daLlave = true, alCompletar = "LLAVE DEL PORTÓN" });
             }
             else if (escena.StartsWith("02"))
             {
@@ -82,7 +82,12 @@ namespace NocheDeAnimas
         {
             get
             {
-                if (LlaveObtenida) return "Ve a la salida: ya tienes la llave";
+                if (LlaveObtenida)
+                {
+                    var j = NAJugador.Transform; var sal = NAMapa.Todas('M');
+                    string dist = j && sal.Count > 0 ? $" ({Mathf.RoundToInt(Vector3.Distance(j.position, sal[0]))} m)" : "";
+                    return "¡Tienes la llave! Ve a la SALIDA: la columna de luz dorada" + dist;
+                }
                 var p = Actual; if (p == null) return "";
                 int hechos = 0; foreach (var m in metas) if (m.hecho) hechos++;
                 return metas.Count > 1 ? $"{p.texto} ({hechos}/{metas.Count})" : p.texto;
@@ -266,7 +271,7 @@ namespace NocheDeAnimas
             g.transform.position = pos;
             if (haciaMuro.sqrMagnitude > 0.01f) g.transform.rotation = Quaternion.LookRotation(haciaMuro);
             var t = g.transform;
-            float pared = NAMapa.C / 2f - 0.15f; // distancia del centro de la celda al muro
+            float pared = Mathf.Max(0f, haciaMuro.magnitude - 0.08f); // distancia del centro de la celda a la cara del muro
             switch (tipo)
             {
                 case "manivela":
@@ -275,9 +280,13 @@ namespace NocheDeAnimas
                     Brillo(g, new Color(1f, 0.6f, 0.2f));
                     break;
                 case "cortina":
-                    var cortina = new GameObject("Cortina").transform; cortina.SetParent(t, false); cortina.localPosition = new Vector3(0, 0, pared);
-                    for (int i = 0; i < 9; i++) NAMat.Pieza(PrimitiveType.Cube, cortina, new Vector3(0, 0.2f + i * 0.32f, 0), new Vector3(2.6f, 0.28f, 0.08f), NAMat.Hex(i % 2 == 0 ? "#9aa3ab" : "#7d858c"));
-                    break;
+                    {
+                        var cortina = new GameObject("Cortina").transform; cortina.SetParent(t, false); cortina.localPosition = new Vector3(0, 0, pared);
+                        for (int i = 0; i < 9; i++) NAMat.Pieza(PrimitiveType.Cube, cortina, new Vector3(0, 0.15f + i * 0.3f, 0), new Vector3(NACasas.Hueco + 0.1f, 0.27f, 0.08f), NAMat.Hex(i % 2 == 0 ? "#9aa3ab" : "#7d858c"));
+                        NAMat.Pieza(PrimitiveType.Cube, cortina, new Vector3(0.5f, 0.35f, -0.08f), new Vector3(0.18f, 0.08f, 0.05f), NAMat.Hex("#c9a227")); // candado
+                        Solido(g, new Vector3(NACasas.Hueco, NACasas.AltoHueco, 0.3f));
+                        break;
+                    }
                 case "calendario":
                     NAMat.Pieza(PrimitiveType.Cube, t, new Vector3(0, 1.6f, pared), new Vector3(0.7f, 0.9f, 0.04f), NAMat.Hex("#f4efe1"));
                     NAMat.Pieza(PrimitiveType.Cube, t, new Vector3(0, 1.92f, pared - 0.01f), new Vector3(0.7f, 0.22f, 0.04f), NAMat.Hex("#d62828"));
@@ -288,6 +297,8 @@ namespace NocheDeAnimas
                     var puertaC = NAMat.Pieza(PrimitiveType.Cube, t, new Vector3(0, 0.55f, -0.41f), new Vector3(0.78f, 0.95f, 0.04f), NAMat.Hex("#3d4648"));
                     puertaC.name = "Puerta";
                     NAMat.Pieza(PrimitiveType.Cylinder, t, new Vector3(0.15f, 0.6f, -0.44f), new Vector3(0.16f, 0.02f, 0.16f), NAMat.Hex("#c0c0c0"), new Vector3(90, 0, 0));
+                    Solido(g, new Vector3(0.9f, 1.1f, 0.8f));
+                    Brillo(g, new Color(1f, 0.85f, 0.5f));
                     break;
                 case "garrafa":
                     NAMat.Pieza(PrimitiveType.Cube, t, new Vector3(0, 0.3f, 0), new Vector3(0.35f, 0.55f, 0.22f), NAMat.Hex("#d62828"));
@@ -375,7 +386,13 @@ namespace NocheDeAnimas
             if (!g) return;
             switch (tipo)
             {
-                case "cortina": { var c = g.transform.Find("Cortina"); if (c) c.localPosition += Vector3.up * 2.7f; break; }
+                case "cortina":
+                    {
+                        var c = g.transform.Find("Cortina"); if (c) c.localPosition += Vector3.up * 2.5f;
+                        foreach (var col in g.GetComponents<Collider>()) col.enabled = false;
+                        var obs = g.GetComponent<UnityEngine.AI.NavMeshObstacle>(); if (obs) obs.enabled = false;
+                        break;
+                    }
                 case "cajafuerte": { var p = g.transform.Find("Puerta"); if (p) { p.localPosition += new Vector3(-0.35f, 0, -0.35f); p.localRotation = Quaternion.Euler(0, 80, 0); } break; }
                 case "puerta": { var b = g.transform.Find("Bisagra"); if (b) b.localRotation = Quaternion.Euler(0, -95, 0); break; }
                 case "farolapagado":

@@ -13,7 +13,7 @@ namespace NocheDeAnimas
         public static string[] Filas;
         public static float C => NAMapas.Celda;
 
-        public static void Cargar(string escena) => Filas = NAMapas.Mapa(escena);
+        public static void Cargar(string escena) { Filas = NAMapas.Mapa(escena); casas = null; }
 
         public static char En(int f, int col)
         {
@@ -49,14 +49,63 @@ namespace NocheDeAnimas
             return false;
         }
 
-        // Dirección hacia el muro vecino (para colgar una cortina, un calendario o una puerta)
+        // Dirección hacia el muro vecino (para colgar una cortina, un calendario o una puerta).
+        // El largo del vector es la distancia del centro de la celda a la cara del muro.
         public static Vector3 HaciaMuro(int f, int col)
         {
-            if (EsMuro(En(f - 1, col))) return Vector3.forward;
-            if (EsMuro(En(f + 1, col))) return Vector3.back;
-            if (EsMuro(En(f, col + 1))) return Vector3.right;
-            if (EsMuro(En(f, col - 1))) return Vector3.left;
-            return Vector3.forward;
+            if (NACasas.EsLinea(En(f, col)))
+                return (NACasas.LineaEnX(Filas, f, col) ? Vector3.forward : Vector3.right) * 0.05f;
+            var dirs = new[] { (f - 1, col, Vector3.forward), (f + 1, col, Vector3.back), (f, col + 1, Vector3.right), (f, col - 1, Vector3.left) };
+            foreach (var (a, b, d) in dirs) if (EsMuro(En(a, b))) return d * (C / 2f);
+            foreach (var (a, b, d) in dirs) if (NACasas.EsPared(En(a, b))) return d * (C - NACasas.Grosor / 2f);
+            return Vector3.forward * (C / 2f);
+        }
+
+        // Celda del mapa que corresponde a un punto del mundo
+        public static void Celda(Vector3 p, out int f, out int col)
+        {
+            col = Mathf.RoundToInt(p.x / C);
+            f = (Filas != null ? Filas.Length - 1 : 0) - Mathf.RoundToInt(p.z / C);
+        }
+
+        // Un punto del NavMesh donde puede aparecer un zombie: en el suelo (no encima de un muro
+        // invisible ni de un puesto) y fuera de las celdas de muro
+        public static bool SueloValido(Vector3 p)
+        {
+            if (Filas == null) return true;
+            Celda(p, out int f, out int col);
+            char ch = En(f, col);
+            if (EsMuro(ch) || ch == 'S' || ch == 'Y' || NACasas.EsLinea(ch)) return false;
+            var t = Terrain.activeTerrain;
+            if (t && Mathf.Abs(p.y - (t.SampleHeight(p) + t.transform.position.y)) > 0.8f) return false;
+            return true;
+        }
+
+        static List<NACasas.Casa> casas;
+        public static List<NACasas.Casa> Casas => casas ??= NACasas.Casas(Filas);
+        public static void Reiniciar() => casas = null;
+
+        // Índice de la casa en la que está un punto (-1 si está en la calle)
+        public static int CasaEn(Vector3 p)
+        {
+            Celda(p, out int f, out int col);
+            var l = Casas;
+            for (int i = 0; i < l.Count; i++) if (f >= l[i].f0 && f <= l[i].f1 && col >= l[i].c0 && col <= l[i].c1) return i;
+            return -1;
+        }
+
+        // Celdas interiores de una casa (para que los muertos salgan de ahí)
+        public static List<Vector3> Interior(int i)
+        {
+            var r = new List<Vector3>();
+            var k = Casas[i];
+            for (int f = k.f0 + 1; f < k.f1; f++)
+                for (int col = k.c0 + 1; col < k.c1; col++)
+                {
+                    char ch = En(f, col);
+                    if (ch == '.' || (ch >= '1' && ch <= '6')) r.Add(Pos(f, col));
+                }
+            return r;
         }
     }
 
@@ -104,6 +153,7 @@ namespace NocheDeAnimas
                     }
                 }
             }
+            CasasHuecas(raiz, rnd);
             if (escena.StartsWith("04")) Campanario(raiz);
             if (pueblo) PapelPicado(raiz, rnd);
             StaticBatchingUtility.Combine(raiz.gameObject);
@@ -159,6 +209,55 @@ namespace NocheDeAnimas
                     }
                     if (rnd.NextDouble() < 0.35) NAMat.Pieza(PrimitiveType.Cube, casa, new Vector3(x, 0.9f, z), new Vector3(1.1f, 2.1f, 0.06f), NAMat.Hex("#4a2e1e")); // puerta
                     else NAMat.Pieza(PrimitiveType.Cube, casa, new Vector3(x, 1.8f, z), new Vector3(0.9f, 1.0f, 0.06f), NAMat.Hex("#1c1f26")); // ventana
+                }
+            }
+        }
+
+        // Casas por las que se puede entrar: paredes delgadas, marcos de puertas y ventanas, techo y piso
+        static void CasasHuecas(Transform raiz, System.Random rnd)
+        {
+            var m = NAMapa.Filas; var casas = NAMapa.Casas;
+            if (casas.Count == 0) return;
+            var colores = new Color[casas.Count];
+            for (int i = 0; i < casas.Count; i++) colores[i] = casas[i].bodega ? NAMat.Hex("#7d8a96") : NAMat.Hex(Adobe[rnd.Next(Adobe.Length)]);
+            var t = Terrain.activeTerrain;
+            float Suelo(Vector3 p) => t ? t.SampleHeight(new Vector3(p.x, 0, p.z)) + t.transform.position.y : 0f;
+
+            foreach (var k in NACasas.Cajas(m, NAMapa.C))
+            {
+                int i = -1;
+                for (int j = 0; j < casas.Count; j++) if (k.f >= casas[j].f0 && k.f <= casas[j].f1 && k.c >= casas[j].c0 && k.c <= casas[j].c1) { i = j; break; }
+                var color = i >= 0 ? colores[i] : NAMat.Hex(Adobe[0]);
+                var centro = k.b.center; float y0 = Suelo(centro);
+                var p = new Vector3(centro.x, y0 + centro.y, centro.z);
+                NAMat.Pieza(PrimitiveType.Cube, raiz, p, k.b.size, k.dintel ? color * 0.92f : color);
+                if (!k.dintel && k.b.size.y > 2f)
+                    NAMat.Pieza(PrimitiveType.Cube, raiz, new Vector3(p.x, y0 + 0.25f, p.z), new Vector3(k.b.size.x + 0.05f, 1.0f, k.b.size.z + 0.05f), color * 0.68f); // zócalo
+            }
+
+            float g = NACasas.Grosor / 2f;
+            for (int i = 0; i < casas.Count; i++)
+            {
+                var k = casas[i];
+                var no = NAMapa.Pos(k.f0, k.c0); var se = NAMapa.Pos(k.f1, k.c1);
+                float x0 = no.x - g, x1 = se.x + g, z1 = no.z + g, z0 = se.z - g;
+                var centro = new Vector3((x0 + x1) / 2f, 0, (z0 + z1) / 2f);
+                float y0 = Suelo(centro);
+                // Techo de teja (o de lámina en la bodega) que sí da sombra
+                var techo = NAMat.Pieza(PrimitiveType.Cube, raiz, new Vector3(centro.x, y0 + NACasas.Alto + 0.1f, centro.z), new Vector3(x1 - x0 + 0.7f, 0.22f, z1 - z0 + 0.7f), k.bodega ? NAMat.Hex("#9aa3ab") : NAMat.Hex("#8a3b2a"));
+                techo.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                NAMat.Pieza(PrimitiveType.Cube, raiz, new Vector3(centro.x, y0 + NACasas.Alto + 0.25f, centro.z), new Vector3(x1 - x0 + 0.2f, 0.12f, z1 - z0 + 0.2f), colores[i] * 0.85f); // pretil
+                // Piso de barro cocido
+                NAMat.Pieza(PrimitiveType.Cube, raiz, new Vector3(centro.x, y0 + 0.05f, centro.z), new Vector3(x1 - x0 - 0.5f, 0.08f, z1 - z0 - 0.5f), k.bodega ? NAMat.Hex("#5d6166") : NAMat.Hex("#9c5f3e"));
+                // Algo de mobiliario: una mesa y una silla en una esquina libre
+                if (!k.bodega && k.f1 - k.f0 >= 3 && k.c1 - k.c0 >= 3)
+                {
+                    var esquina = NAMapa.Pos(k.f0 + 1, k.c0 + 1);
+                    if (NAMapa.En(k.f0 + 1, k.c0 + 1) == '.')
+                    {
+                        NAMat.Pieza(PrimitiveType.Cube, raiz, new Vector3(esquina.x - 0.4f, y0 + 0.75f, esquina.z + 0.4f), new Vector3(1.2f, 0.08f, 0.8f), NAMat.Hex("#6b4226"));
+                        NAMat.Pieza(PrimitiveType.Cube, raiz, new Vector3(esquina.x - 0.4f, y0 + 0.37f, esquina.z + 0.4f), new Vector3(0.9f, 0.74f, 0.5f), NAMat.Hex("#5a3720"));
+                    }
                 }
             }
         }
@@ -240,10 +339,11 @@ namespace NocheDeAnimas
             {
                 int f = 1 + rnd.Next(filas.Length - 2);
                 int col = rnd.Next(filas[f].Length);
-                if (NAMapa.EsMuro(filas[f][col])) continue;
+                bool Tope(char ch) => NAMapa.EsMuro(ch) || NACasas.EsLinea(ch);
+                if (Tope(filas[f][col]) || NAMapa.CasaEn(NAMapa.Pos(f, col)) >= 0) continue;
                 int izq = col, der = col;
-                while (izq > 0 && !NAMapa.EsMuro(filas[f][izq - 1])) izq--;
-                while (der < filas[f].Length - 1 && !NAMapa.EsMuro(filas[f][der + 1])) der++;
+                while (izq > 0 && !Tope(filas[f][izq - 1])) izq--;
+                while (der < filas[f].Length - 1 && !Tope(filas[f][der + 1])) der++;
                 if (der - izq < 2 || der - izq > 12) continue;
                 var a = NAMapa.Pos(f, izq) - Vector3.right * NAMapa.C / 2f;
                 var b = NAMapa.Pos(f, der) + Vector3.right * NAMapa.C / 2f;

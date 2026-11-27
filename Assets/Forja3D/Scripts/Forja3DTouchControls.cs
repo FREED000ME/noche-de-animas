@@ -70,7 +70,7 @@ namespace Forja3D
                 CrearBoton("DISPARAR", new Vector2(-220, 230), 240, new Color(0.85f, 0.22f, 0.18f, 0.72f),
                     () => Forja3DInput.DispararTactil = true, () => Forja3DInput.DispararTactil = false);
                 CrearBoton("RECARGAR", new Vector2(-500, 150), 165, new Color(0.85f, 0.7f, 0.25f, 0.65f), Forja3DInput.PulsarRecarga);
-                CrearBoton("ESQUIVAR", new Vector2(-230, 500), 165, new Color(0.3f, 0.75f, 0.55f, 0.65f), Forja3DInput.PulsarEsquiva);
+                CrearBoton("SALTAR", new Vector2(-230, 500), 165, new Color(0.3f, 0.75f, 0.55f, 0.65f), Forja3DInput.PulsarSalto);
                 CrearBoton("ARMA", new Vector2(-480, 400), 150, new Color(0.25f, 0.55f, 0.95f, 0.6f), Forja3DInput.PulsarCambioArma);
                 CrearBoton("CORRER", new Vector2(-740, 120), 135, new Color(0.6f, 0.6f, 0.65f, 0.55f), Forja3DInput.AlternarCorrer, null, () => Forja3DInput.CorrerActivo);
                 CrearBoton("ACCIÓN", new Vector2(-740, 330), 160, new Color(0.95f, 0.55f, 0.15f, 0.65f),

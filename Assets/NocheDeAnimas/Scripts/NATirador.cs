@@ -53,7 +53,7 @@ namespace NocheDeAnimas
             cc = GetComponent<CharacterController>();
             vida = GetComponent<Forja3DHealth>();
             control = GetComponent<Forja3DPlayerController>();
-            if (control) { baseTrote = control.velocidadTrote; baseCorrer = control.velocidadCorrer; }
+            if (control) { baseTrote = control.velocidadTrote; baseCorrer = control.velocidadCorrer; control.fuerzaSalto = 6.5f; } // salta lo bastante para cruzar una ventana
         }
 
         void OnDestroy() { if (Instancia == this) Instancia = null; if (vista) Destroy(vista.gameObject); }
@@ -230,6 +230,8 @@ namespace NocheDeAnimas
                     continue;
                 }
                 fin = h.point;
+                var ab = h.collider.GetComponentInParent<NAAbertura>();
+                if (ab) ab.Danio(a.danio, origen); // las puertas y ventanas también se rompen a tiros
                 Forja3DFX.Chispas(h.point + h.normal * 0.05f, 5);
                 break;
             }
@@ -377,7 +379,9 @@ namespace NocheDeAnimas
                     if (++atravesados > arma.atraviesa) { Destroy(gameObject); return; }
                     continue;
                 }
-                // Clavada en el escenario
+                // Clavada en el escenario (o en una puerta)
+                var ab = h.collider.GetComponentInParent<NAAbertura>();
+                if (ab) ab.Danio(arma.danio, transform.position);
                 Forja3DFX.Chispas(h.point, 6);
                 NASonido.Sonar("impacto", h.point, 0.5f, 0.7f);
                 transform.position = h.point - dir * 0.3f;
@@ -405,6 +409,7 @@ namespace NocheDeAnimas
         public static void En(Vector3 centro, float radio, int danioJugador, int danioZombies, Transform autor)
         {
             NASonido.Sonar("explosion", centro, 1f);
+            NAAberturas.Explosion(centro, radio, danioZombies);
             Forja3DFX.Polvo(centro, radio * 0.8f);
             Forja3DFX.Chispas(centro, 40, true);
             Forja3DFX.Temblor(0.5f, 0.45f);

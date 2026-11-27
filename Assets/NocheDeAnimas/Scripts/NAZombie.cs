@@ -31,6 +31,7 @@ namespace NocheDeAnimas
         float proximoAtaque, proximaRuta, proximaEspecial, proximaVoz, fase, sacudida;
         bool accion, muerto, explotado, emergiendo;
         Vector3 posCuerpo;
+        NAAbertura abertura; float aberturaHasta;
 
         public bool Muerto => muerto;
         public float Escala { get; private set; } = 1f;
@@ -238,7 +239,19 @@ namespace NocheDeAnimas
             }
 
             // Persecución
-            if (Time.time > proximaRuta) { proximaRuta = Time.time + 0.2f; agente.SetDestination(jugador.position); }
+            if (Time.time > proximaRuta)
+            {
+                proximaRuta = Time.time + 0.25f;
+                var destino = jugador.position;
+                if (abertura && (!abertura.Cerrada || Time.time > aberturaHasta)) abertura = null;
+                if (!abertura && !agente.pathPending && agente.hasPath && agente.pathStatus == NavMeshPathStatus.PathPartial)
+                {
+                    abertura = NAAberturas.ParaRomper(transform.position, jugador.position);
+                    aberturaHasta = Time.time + 4f;
+                }
+                if (abertura) destino = abertura.transform.position;
+                agente.SetDestination(destino);
+            }
             if (d <= rango && Time.time > proximoAtaque && tipo != TipoZombie.Cuetero) StartCoroutine(Golpe(haciaJ));
         }
 
@@ -253,6 +266,8 @@ namespace NocheDeAnimas
             }
             return true;
         }
+
+        public void MirarHacia(Vector3 punto) { var d = punto - transform.position; d.y = 0; Mirar(d); }
 
         void Mirar(Vector3 dir)
         {

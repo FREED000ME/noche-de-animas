@@ -6,13 +6,14 @@
 #   #  casa (muro)            X  iglesia (muro)          P jugador   M salida (portón/puerta)
 #   W  mesa de armado         S  puesto del mercado      Y tumba     F farol     C suministros
 #   T  árbol   R  roca        1-6 piezas de armas        a-f puntos de la misión   Z aparición del jefe
-#   B  bodega con cortina de metal (muro)
+#   Casas por las que se entra (paredes delgadas): H pared de adobe · G pared de la bodega
+#   D puerta · V ventana · Q cortina de metal de la bodega (la abre la misión)
 # Uso: python3 tools/mapas.py
 import json, os
 from collections import deque
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MUROS = set("#XB")
+MUROS = set("#XBHG")
 OBSTACULOS = set("SY")
 
 NIVELES = [
@@ -25,21 +26,21 @@ NIVELES = [
        transicion="Con la llave del portón saliste del mercado. Abajo espera la cañada.",
        mapa=[
 "#########################",
-"#P..W....######....a....#",
-"#........######.........#",
-"#..F.....bBBBBB...SS.SS.#",
-"###...........F...SS.SS.#",
-"#1....SS.SS.............#",
-"#.....SS.SS....####..4..#",
-"#..............####.....#",
-"#####.....F.....c##..F..#",
-"#####...SS.SS.......SS..#",
-"#..2....SS.SS....5..SS..#",
-"#...........###.........#",
-"#..F...d....###....F..6.#",
-"#.......3...###.........#",
-"#....C..........C.......#",
-"#..................F...M#",
+"#P..W....GGGGGG.....a...#",
+"#........G.c..G.........#",
+"#..F.....G..d.G..SS.SS..#",
+"#........GGQGGG..SS.SS..#",
+"#1...SS.SS..F...........#",
+"#....SS.SS......HHVHH...#",
+"#...............H.4.H...#",
+"#HHVHH....F.....D...V.F.#",
+"#H...H..SS.SS...HHDHH...#",
+"#H.2.D..SS.SS...........#",
+"#H...H.........HHDHH....#",
+"#HHVHH..F......H.5.V..6.#",
+"#.......3......V...H....#",
+"#....C.........HHHHH....#",
+"#...F...........C....F.M#",
 "#########################"]),
   dict(id="02_02-canada", titulo="Día 2: La cañada", ambiente="selva", niebla=False, cielo="#e9a46a",
        terreno=dict(tipo="piedra", colinas=0.9, semilla=7), altura_muros=3, color_muros="#7d6a58",
@@ -52,18 +53,18 @@ NIVELES = [
 "#P.W.....T....##....a...#",
 "#........R....##........#",
 "###..T......#####...T...#",
-"###.....a...#####.......#",
-"#....##..............R..#",
-"#.1..##....T....##......#",
-"#........b......##..4...#",
-"#..T.......R............#",
-"####..........T....##...#",
-"####...2....##.....##.5.#",
-"#...........##..........#",
-"#..R...T.......a....T...#",
-"#.....3...c.........R...#",
-"#...##.........6....##..#",
-"#...##..T...........##.M#",
+"###.........#####.......#",
+"#....HHVHH............R.#",
+"#.1..V...D..T....##.....#",
+"#....H.a.H.b.....##..4..#",
+"#..T.HHVHH.R............#",
+"####..........T...HHVHH.#",
+"####...2....##....D...H.#",
+"#...........##....H.5.V.#",
+"#..R...T.......a..HHHHH.#",
+"#.....3...c...........R.#",
+"#...##.........6........#",
+"#...##..T........T.....M#",
 "#########################"]),
   dict(id="03_03-primera-noche", titulo="Noche 2: Los callejones", ambiente="tormenta", niebla=True, cielo="#1d2440",
        terreno=dict(tipo="piedra", colinas=0.6, semilla=11), altura_muros=0.3, color_muros="#5a5560",
@@ -73,21 +74,21 @@ NIVELES = [
        transicion="Desde la capilla se oye una campana. Alguien la está tocando en el atrio.",
        mapa=[
 "#########################",
-"#P.W..#######...........#",
-"#.....#######..a..####..#",
-"#..F..............####..#",
-"####...####.....#######.#",
-"####...####..1..#######.#",
+"#P.W..HHHHHHH...........#",
+"#.....H.....D..a..####..#",
+"#..F..V..1..H.....####..#",
+"####..HHHVHHH...#######.#",
+"####............#######.#",
 "#.........b.............#",
-"#..####.......####...F..#",
-"#..####...F...####......#",
-"#.........####.....#..2.#",
-"#.YY.YY...####..d###....#",
-"#.........####..####..F.#",
-"#.YY.YY.e...............#",
-"#.......c....###...3....#",
-"#..F........####........#",
-"#...........####......M.#",
+"#..HHVHH......HHVHH..F..#",
+"#..H...D...F..D...H.....#",
+"#..V...H......H.2.H.....#",
+"#..HHHHH......HHVHH.....#",
+"#.........c.......###d..#",
+"#.YY.YY.e.........###...#",
+"#.YY.YY...........###.3.#",
+"#..F....................#",
+"#.....................M.#",
 "#########################"]),
   dict(id="04_04-atrio", titulo="Noche de Ánimas: El atrio", ambiente="infierno", niebla=True, cielo="#2a1830",
        terreno=dict(tipo="piedra", colinas=0.8, semilla=31), altura_muros=0.3, color_muros="#6a5a50",
@@ -108,10 +109,10 @@ NIVELES = [
 "#b......................#",
 "#.YY.YY..F.....F..YY.YY.#",
 "#.......................#",
-"#####.................c.#",
-"#####..W...........######",
-"#....................####",
-"#P.........C.........####",
+"#####............HHVHHH.#",
+"#####..W.........D....H.#",
+"#................H..c.V.#",
+"#P.........C.....HHHHHH.#",
 "#########################"]),
 ]
 
@@ -154,7 +155,12 @@ def generar():
     for n in NIVELES:
         filas = ", ".join(json.dumps(f) for f in n["mapa"])
         lineas.append(f'            if (escena.StartsWith("{n["id"][:2]}")) return new[] {{ {filas} }};')
-    lineas += ["            return null;", "        }", "    }", "}", ""]
+    lineas += ["            return null;", "        }", "",
+               "        // Nombre del mapa al que lleva la salida", "        public static string Siguiente(string escena)", "        {"]
+    for i, n in enumerate(NIVELES):
+        sig = NIVELES[i + 1]["titulo"] if i + 1 < len(NIVELES) else "El amanecer"
+        lineas.append(f'            if (escena.StartsWith("{n["id"][:2]}")) return {json.dumps(sig, ensure_ascii=False)};')
+    lineas += ['            return "El siguiente mapa";', "        }", "    }", "}", ""]
     with open(f"{RAIZ}/Assets/NocheDeAnimas/Scripts/NAMapas.cs", "w", encoding="utf-8") as f:
         f.write("\n".join(lineas))
     print("Mapas generados:", ", ".join(n["id"] for n in NIVELES))

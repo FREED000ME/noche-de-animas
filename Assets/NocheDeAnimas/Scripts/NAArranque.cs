@@ -1,6 +1,6 @@
 // Noche de Ánimas — arranque de cada nivel: convierte la escena de la plantilla en el shooter de oleadas.
 //   · Los enemigos colocados en el mapa (E, K, J) pasan a ser zombies de Noche de Ánimas.
-//   · El pueblo se levanta sobre el mapa (casas de adobe, puestos, tumbas, faroles, iglesia).
+//   · El pueblo se levanta sobre el mapa (casas de adobe con puertas y ventanas, puestos, tumbas, faroles, iglesia).
 //   · Cámara en primera persona; el jugador empieza con la resortera y las armas que ya armó.
 //   · Oleadas infinitas, mesa de armado, misión por pasos para conseguir la llave, puntos y poderes.
 // Se ejecuta solo al cargar cualquier escena que tenga un nivel (Forja3DGameManager).
@@ -67,6 +67,8 @@ namespace NocheDeAnimas
                 tirador.Configurar(cfg);
                 var oleadas = gm.gameObject.AddComponent<NAOleadas>();
                 oleadas.cfg = cfg;
+                gm.gameObject.AddComponent<NAAberturas>().Iniciar(escena.name);
+                NASalida.Construir(escena.name);
                 gm.gameObject.AddComponent<NAArmado>().Iniciar(cfg);
                 gm.gameObject.AddComponent<NAMision>().Iniciar(NAMisiones.Para(escena.name));
                 gm.gameObject.AddComponent<NAHUD>();
@@ -171,6 +173,7 @@ namespace NocheDeAnimas
             string ind = ""; float prog = -1f;
             if (mis && !string.IsNullOrEmpty(mis.Indicacion)) { ind = mis.Indicacion; prog = mis.Progreso; }
             else if (arm && !string.IsNullOrEmpty(arm.Indicacion)) { ind = arm.Indicacion; prog = arm.Progreso; }
+            else if (NAAberturas.Inst && !string.IsNullOrEmpty(NAAberturas.Inst.Indicacion)) ind = NAAberturas.Inst.Indicacion;
             if (prog >= 0f) ind += "\n" + Barra(prog);
             textoAccion.text = ind;
         }

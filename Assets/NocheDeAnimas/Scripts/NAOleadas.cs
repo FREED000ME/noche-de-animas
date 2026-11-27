@@ -87,12 +87,40 @@ namespace NocheDeAnimas
             return TipoZombie.Caminante;
         }
 
+        // Dos de cada tres salen de dentro de una casa (y se abren paso por puertas y ventanas);
+        // los demás salen de la tierra
         void Salir()
         {
-            if (!Punto(11f, 999f, out var p)) return;
-            var z = NAZombie.Crear(Elegir(), p, true, MultVida);
+            var tipo = Elegir();
+            Vector3 p = default;
+            bool deCasa = Random.value < 0.65f && DesdeCasa(out p);
+            if (!deCasa && !Punto(11f, 999f, out p)) return;
+            var z = NAZombie.Crear(tipo, p, !deCasa, MultVida);
             deOleada.Add(z);
             porSalir--;
+        }
+
+        bool DesdeCasa(out Vector3 p)
+        {
+            p = default;
+            var casas = NAMapa.Casas;
+            if (casas.Count == 0) return false;
+            var j = NAJugador.Transform;
+            int dentro = j ? NAMapa.CasaEn(j.position) : -1;
+            for (int intento = 0; intento < 8; intento++)
+            {
+                int i = Random.Range(0, casas.Count);
+                if (i == dentro || casas[i].bodega) continue;
+                var celdas = NAMapa.Interior(i);
+                if (celdas.Count == 0) continue;
+                var c = celdas[Random.Range(0, celdas.Count)];
+                if (j && Vector3.Distance(j.position, c) < 10f) continue;
+                c += new Vector3(Random.Range(-0.7f, 0.7f), 0, Random.Range(-0.7f, 0.7f));
+                if (!NavMesh.SamplePosition(c, out var hit, 1.2f, NavMesh.AllAreas) || !NAMapa.SueloValido(hit.position)) continue;
+                p = hit.position;
+                return true;
+            }
+            return false;
         }
 
         // Refuerzos (grito de la Plañidera, campana del Sacristán): cerca, pero no encima
@@ -148,6 +176,7 @@ namespace NocheDeAnimas
                 if (u + v > 1f) { u = 1f - u; v = 1f - v; }
                 var p = a + (b - a) * u + (c - a) * v;
                 if (!NavMesh.SamplePosition(p, out var hit, 1.5f, NavMesh.AllAreas)) continue;
+                if (!NAMapa.SueloValido(hit.position)) continue; // nada de zombies encima de los muros
                 float d = jugador ? Vector3.Distance(jugador.position, hit.position) : minimo;
                 if (d >= minimo && d <= maximo) { punto = hit.position; return true; }
                 if (d >= minimo * 0.6f && d > mejorD) { mejorD = d; mejor = hit.position; }

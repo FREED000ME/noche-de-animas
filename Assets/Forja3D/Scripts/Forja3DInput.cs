@@ -78,7 +78,7 @@ namespace Forja3D
 
         public static bool Saltar => Pulso(ref saltoFrame) || (!EsTactil && Input.GetKeyDown(KeyCode.Space));
         public static bool Atacar => !ModoDisparo && (Pulso(ref ataqueFrame) || (!EsTactil && Input.GetMouseButtonDown(0)));
-        public static bool Esquivar => Pulso(ref esquivaFrame) || (!EsTactil && (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.LeftAlt)));
+        public static bool Esquivar => !ModoDisparo && (Pulso(ref esquivaFrame) || (!EsTactil && (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.LeftAlt))));
 
         public static Vector2 Mirar
         {
