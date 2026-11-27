@@ -1,0 +1,11 @@
+{
+  "forja3d": 1,
+  "personaje": false,
+  "biblioteca": false,
+  "archivos": [
+    {
+      "nombre": "modelo",
+      "tipo": "modelo"
+    }
+  ]
+}
