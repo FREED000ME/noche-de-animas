@@ -207,8 +207,21 @@ namespace NocheDeAnimas
                         NAMat.Pieza(PrimitiveType.Cube, casa, new Vector3(x, 4.2f, z), new Vector3(0.9f, 2.2f, 0.06f), NAMat.Hex("#3b2a5a"), default, 0.6f); // vitral
                         continue;
                     }
-                    if (rnd.NextDouble() < 0.35) NAMat.Pieza(PrimitiveType.Cube, casa, new Vector3(x, 0.9f, z), new Vector3(1.1f, 2.1f, 0.06f), NAMat.Hex("#4a2e1e")); // puerta
-                    else NAMat.Pieza(PrimitiveType.Cube, casa, new Vector3(x, 1.8f, z), new Vector3(0.9f, 1.0f, 0.06f), NAMat.Hex("#1c1f26")); // ventana
+                    // Estas casas no se abren: puertas y ventanas tapiadas con tablas cruzadas
+                    float zt = z + lado * 0.05f;
+                    var tabla = NAMat.Hex("#8a6a45");
+                    if (rnd.NextDouble() < 0.35)
+                    {
+                        NAMat.Pieza(PrimitiveType.Cube, casa, new Vector3(x, 0.9f, z), new Vector3(1.1f, 2.1f, 0.06f), NAMat.Hex("#4a2e1e")); // puerta
+                        NAMat.Pieza(PrimitiveType.Cube, casa, new Vector3(x, 0.9f, zt), new Vector3(0.16f, 2.3f, 0.05f), tabla, new Vector3(0, 0, 28));
+                        NAMat.Pieza(PrimitiveType.Cube, casa, new Vector3(x, 0.9f, zt), new Vector3(0.16f, 2.3f, 0.05f), tabla, new Vector3(0, 0, -28));
+                    }
+                    else
+                    {
+                        NAMat.Pieza(PrimitiveType.Cube, casa, new Vector3(x, 1.8f, z), new Vector3(0.9f, 1.0f, 0.06f), NAMat.Hex("#1c1f26")); // ventana
+                        NAMat.Pieza(PrimitiveType.Cube, casa, new Vector3(x, 1.95f, zt), new Vector3(1.1f, 0.16f, 0.05f), tabla, new Vector3(0, 0, 8));
+                        NAMat.Pieza(PrimitiveType.Cube, casa, new Vector3(x, 1.6f, zt), new Vector3(1.1f, 0.16f, 0.05f), tabla, new Vector3(0, 0, -6));
+                    }
                 }
             }
         }
@@ -278,9 +291,17 @@ namespace NocheDeAnimas
             foreach (var x in new[] { -1.05f, 1.05f }) foreach (var z in new[] { -0.55f, 0.55f })
                     NAMat.Pieza(PrimitiveType.Cube, t, new Vector3(x, 1.2f, z), new Vector3(0.07f, 2.4f, 0.07f), NAMat.Hex("#5a3a22"));
             NAMat.Pieza(PrimitiveType.Cube, t, new Vector3(0, 2.45f, 0), new Vector3(2.5f, 0.06f, 1.6f), NAMat.Hex(Papel[rnd.Next(Papel.Length)]));
+            // Frutas aparte (fuera del lote estático): revientan de un tiro
+            var frutas = new GameObject("FrutasPuesto").transform;
+            frutas.SetPositionAndRotation(g.transform.position, g.transform.rotation);
             string[] fruta = { "#f77f00", "#d62828", "#fcbf49", "#6a994e" };
+            string[] pulpa = { "#ffb347", "#ff4d4d", "#ffd166", "#b5e48c" };
             for (int i = 0; i < 6; i++)
-                NAMat.Pieza(PrimitiveType.Sphere, t, new Vector3(-0.8f + i * 0.32f, 1.0f, (float)rnd.NextDouble() * 0.6f - 0.3f), Vector3.one * 0.22f, NAMat.Hex(fruta[rnd.Next(fruta.Length)]));
+            {
+                int k = rnd.Next(fruta.Length);
+                NAFruta.Crear(frutas, new Vector3(-0.8f + i * 0.32f, 1.02f, (float)rnd.NextDouble() * 0.6f - 0.3f), 0.24f, NAMat.Hex(fruta[k]), NAMat.Hex(pulpa[k]));
+            }
+            if (rnd.NextDouble() < 0.6) NAFruta.Crear(frutas, new Vector3(0.7f, 1.12f, 0.25f), 0.45f, NAMat.Hex("#2d6a4f"), NAMat.Hex("#ff4d6d")); // sandía
             Obstaculo(g, new Vector3(2.2f, 1.6f, 1.2f), new Vector3(0, 0.8f, 0));
         }
 

@@ -61,7 +61,7 @@ namespace NocheDeAnimas
             if (orbital && orbital.enabled) orbital.enabled = false;
             if (Forja3DInput.EsTactil) return;
             // PC: capturar el ratón
-            if (Forja3DGameManager.Bloqueado) { if (Cursor.lockState != CursorLockMode.None) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; } return; }
+            if (Forja3DGameManager.Bloqueado || NAPausa.Activa) { if (Cursor.lockState != CursorLockMode.None) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; } return; }
             if (Input.GetKeyDown(KeyCode.Escape)) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
             else if (Input.GetMouseButtonDown(0) && Cursor.lockState != CursorLockMode.Locked) { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
         }

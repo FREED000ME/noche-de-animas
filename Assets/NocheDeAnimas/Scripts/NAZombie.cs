@@ -32,6 +32,7 @@ namespace NocheDeAnimas
         bool accion, muerto, explotado, emergiendo;
         Vector3 posCuerpo;
         NAAbertura abertura; float aberturaHasta;
+        Color colorPiel = Color.gray;
 
         public bool Muerto => muerto;
         public float Escala { get; private set; } = 1f;
@@ -113,6 +114,7 @@ namespace NocheDeAnimas
                 case TipoZombie.Cuetero: ropa = NAMat.Hex("#7a2a1a"); ojos = NAMat.Hex("#ffcc33"); break;
                 case TipoZombie.Sacristan: piel = NAMat.Hex("#c9c2b0"); ropa = NAMat.Hex("#151515"); ojos = NAMat.Hex("#ff2200"); pantalon = ropa; break;
             }
+            colorPiel = piel;
             cuerpo = new GameObject("Cuerpo").transform;
             cuerpo.SetParent(transform, false);
             cuerpo.localScale = new Vector3(ancho, 1f, ancho) * escala;
@@ -441,6 +443,9 @@ namespace NocheDeAnimas
             agente.enabled = false;
             foreach (var c in GetComponentsInChildren<Collider>()) c.enabled = false;
             Forja3DFX.Sangre(Pecho, Vector3.up, esJefe ? 70 : 26);
+            // Revienta: sangre oscura, trozos y una mancha en el suelo
+            NASplash.En(Pecho, new Color(0.45f, 0.02f, 0.02f), esJefe ? 22 : 12, esJefe ? 6f : 4.5f, esJefe ? 2.4f : 1.3f);
+            NASplash.En(Pecho, colorPiel, esJefe ? 8 : 4, 3.5f, 0f);
             NASonido.Sonar("gemido", Pecho, 0.6f, esJefe ? 0.5f : 0.8f);
             if (esJefe)
             {

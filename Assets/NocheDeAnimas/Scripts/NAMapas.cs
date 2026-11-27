@@ -22,5 +22,15 @@ namespace NocheDeAnimas
             if (escena.StartsWith("04")) return "El amanecer";
             return "El siguiente mapa";
         }
+
+        // Título del mapa
+        public static string Titulo(string escena)
+        {
+            if (escena.StartsWith("01")) return "Día 1: El mercado";
+            if (escena.StartsWith("02")) return "Día 2: La cañada";
+            if (escena.StartsWith("03")) return "Noche 2: Los callejones";
+            if (escena.StartsWith("04")) return "Noche de Ánimas: El atrio";
+            return escena;
+        }
     }
 }

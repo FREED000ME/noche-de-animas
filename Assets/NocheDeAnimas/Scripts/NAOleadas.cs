@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Forja3D;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 
 namespace NocheDeAnimas
 {
@@ -21,6 +22,7 @@ namespace NocheDeAnimas
         public float SegundosParaLaSiguiente => Mathf.Max(0f, pausaHasta - Time.time);
 
         int porSalir;
+        bool recordAvisado;
         bool enCurso;
         float proximaSalida, pausaHasta;
         readonly HashSet<NAZombie> deOleada = new HashSet<NAZombie>();
@@ -69,7 +71,10 @@ namespace NocheDeAnimas
             porSalir = cfg.zombiesBase + (Oleada - 1) * cfg.zombiesPorOleada;
             proximaSalida = Time.time + 0.5f;
             NASonido.Sonar("campana", null, 0.7f, 0.6f);
-            Forja3DGameManager.Mensaje($"OLEADA {Oleada}");
+            bool antes = NARecord.De(SceneManager.GetActiveScene().name) > 0;
+            if (NARecord.Registrar(SceneManager.GetActiveScene().name, Oleada) && antes && !recordAvisado)
+            { recordAvisado = true; Forja3DGameManager.Mensaje($"OLEADA {Oleada}: ¡NUEVO RÉCORD!"); }
+            else Forja3DGameManager.Mensaje($"OLEADA {Oleada}");
         }
 
         TipoZombie Elegir()

@@ -160,7 +160,11 @@ def generar():
     for i, n in enumerate(NIVELES):
         sig = NIVELES[i + 1]["titulo"] if i + 1 < len(NIVELES) else "El amanecer"
         lineas.append(f'            if (escena.StartsWith("{n["id"][:2]}")) return {json.dumps(sig, ensure_ascii=False)};')
-    lineas += ['            return "El siguiente mapa";', "        }", "    }", "}", ""]
+    lineas += ['            return "El siguiente mapa";', "        }", "",
+               "        // Título del mapa", "        public static string Titulo(string escena)", "        {"]
+    for n in NIVELES:
+        lineas.append(f'            if (escena.StartsWith("{n["id"][:2]}")) return {json.dumps(n["titulo"], ensure_ascii=False)};')
+    lineas += ["            return escena;", "        }", "    }", "}", ""]
     with open(f"{RAIZ}/Assets/NocheDeAnimas/Scripts/NAMapas.cs", "w", encoding="utf-8") as f:
         f.write("\n".join(lineas))
     print("Mapas generados:", ", ".join(n["id"] for n in NIVELES))

@@ -115,7 +115,7 @@ namespace NocheDeAnimas
             }
             if (control && Time.time > lentoHasta && control.velocidadTrote < baseTrote) { control.velocidadTrote = baseTrote; control.velocidadCorrer = baseCorrer; }
 
-            if (armas.Count == 0 || Forja3DGameManager.Bloqueado || (vida && vida.Muerto)) return;
+            if (armas.Count == 0 || Forja3DGameManager.Bloqueado || NAPausa.Activa || (vida && vida.Muerto)) return;
 
             int directa = Forja3DInput.ArmaDirecta;
             if (directa >= 0 && directa < armas.Count && directa != actual) Cambiar(directa);
@@ -230,6 +230,8 @@ namespace NocheDeAnimas
                     continue;
                 }
                 fin = h.point;
+                var fruta = h.collider.GetComponent<NAFruta>();
+                if (fruta) { fruta.Reventar(); break; }
                 var ab = h.collider.GetComponentInParent<NAAbertura>();
                 if (ab) ab.Danio(a.danio, origen); // las puertas y ventanas también se rompen a tiros
                 Forja3DFX.Chispas(h.point + h.normal * 0.05f, 5);
@@ -379,6 +381,8 @@ namespace NocheDeAnimas
                     if (++atravesados > arma.atraviesa) { Destroy(gameObject); return; }
                     continue;
                 }
+                var fr = h.collider.GetComponent<NAFruta>();
+                if (fr) { fr.Reventar(); continue; }
                 // Clavada en el escenario (o en una puerta)
                 var ab = h.collider.GetComponentInParent<NAAbertura>();
                 if (ab) ab.Danio(arma.danio, transform.position);
@@ -410,6 +414,7 @@ namespace NocheDeAnimas
         {
             NASonido.Sonar("explosion", centro, 1f);
             NAAberturas.Explosion(centro, radio, danioZombies);
+            NAFruta.Explosion(centro, radio);
             Forja3DFX.Polvo(centro, radio * 0.8f);
             Forja3DFX.Chispas(centro, 40, true);
             Forja3DFX.Temblor(0.5f, 0.45f);

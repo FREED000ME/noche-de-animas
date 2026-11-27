@@ -18,6 +18,13 @@ namespace NocheDeAnimas
         {
             SceneManager.sceneLoaded -= AlCargar;
             SceneManager.sceneLoaded += AlCargar;
+            // El selector de niveles del título muestra el nombre del mapa y el récord de oleadas
+            Forja3DTitle.InfoNivel = i =>
+            {
+                string esc = System.IO.Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(i));
+                int r = NARecord.De(esc);
+                return $"{NAMapas.Titulo(esc)}   <color=#ffb347>{(r > 0 ? $"Récord: {r} oleadas" : "Sin récord")}</color>";
+            };
         }
 
         // sceneLoaded llega después de los Awake de la escena y antes de sus Start
@@ -33,6 +40,7 @@ namespace NocheDeAnimas
                 if (escena.name.StartsWith("01")) NAArmado.Olvidar(); // partida nueva: se empieza solo con la resortera
                 NAPuntos.Reiniciar();
                 NAPoderes.Reiniciar();
+                NASplash.Reiniciar();
                 try { NAEscenografia.Construir(escena.name, cfg.noche); }
                 catch (System.Exception ex) { Debug.LogError("[Forja3D] Noche de Ánimas: escenografía: " + ex); }
 
@@ -72,6 +80,7 @@ namespace NocheDeAnimas
                 gm.gameObject.AddComponent<NAArmado>().Iniciar(cfg);
                 gm.gameObject.AddComponent<NAMision>().Iniciar(NAMisiones.Para(escena.name));
                 gm.gameObject.AddComponent<NAHUD>();
+                gm.gameObject.AddComponent<NAPausa>();
             }
             catch (System.Exception ex)
             {
@@ -84,7 +93,8 @@ namespace NocheDeAnimas
     // HUD propio: mira, arma y munición, puntos, poderes activos, oleada, objetivo, piezas y avisos de ACCIÓN
     public class NAHUD : MonoBehaviour
     {
-        Text textoArma, textoMunicion, textoOleada, textoRecarga, textoPuntos, textoPoderes, textoObjetivo, textoPiezas, textoAccion, mira;
+        Text textoArma, textoMunicion, textoOleada, textoRecarga, textoPuntos, textoPoderes, textoObjetivo, textoPiezas, textoAccion, mira, textoMuerte;
+        Image rojo; float alfaRojo; int record;
 
         void Start()
         {
@@ -133,6 +143,15 @@ namespace NocheDeAnimas
 
             mira = Forja3DGameManager.Texto(t, "+", 54, TextAnchor.MiddleCenter);
             mira.color = new Color(1f, 1f, 1f, 0.85f);
+
+            // Pantalla roja cuando te come un zombie
+            var go = new GameObject("PantallaRoja", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(t, false);
+            var r = go.GetComponent<RectTransform>(); r.anchorMin = Vector2.zero; r.anchorMax = Vector2.one; r.offsetMin = r.offsetMax = Vector2.zero;
+            rojo = go.GetComponent<Image>(); rojo.color = new Color(0.6f, 0f, 0f, 0f); rojo.raycastTarget = false;
+            textoMuerte = Forja3DGameManager.Texto(go.transform, "", 110, TextAnchor.MiddleCenter);
+            textoMuerte.color = new Color(1f, 0.85f, 0.8f); textoMuerte.fontStyle = FontStyle.Bold;
+            record = NARecord.De(SceneManager.GetActiveScene().name);
         }
 
         static string Barra(float p) { int n = Mathf.RoundToInt(Mathf.Clamp01(p) * 12f); return "[" + new string('|', n) + new string('.', 12 - n) + "]"; }
@@ -141,6 +160,15 @@ namespace NocheDeAnimas
         {
             if (!textoArma) return;
             var tir = NATirador.Instancia;
+            var vj = tir ? tir.GetComponent<Forja3DHealth>() : null;
+            if (vj && vj.Muerto)
+            {
+                alfaRojo = Mathf.MoveTowards(alfaRojo, 0.78f, Time.unscaledDeltaTime * 1.5f);
+                textoMuerte.text = "TE COMIERON";
+                mira.text = ""; textoAccion.text = ""; textoRecarga.text = "";
+            }
+            rojo.color = new Color(0.6f, 0f, 0f, alfaRojo);
+            if (vj && vj.Muerto) return;
             if (tir && tir.Arma != null)
             {
                 textoArma.text = tir.Arma.nombre;
@@ -161,8 +189,11 @@ namespace NocheDeAnimas
             var o = NAOleadas.Inst;
             if (o)
             {
-                if (o.EnPausa && o.Oleada > 0) textoOleada.text = $"OLEADA {o.Oleada + 1} EN {Mathf.CeilToInt(o.SegundosParaLaSiguiente)}";
-                else textoOleada.text = o.Oleada > 0 ? $"OLEADA {o.Oleada}" : "";
+                record = Mathf.Max(record, o.Oleada);
+                string rec = record > 0 ? $"<size=28>   RÉCORD {record}</size>" : "";
+                textoOleada.supportRichText = true;
+                if (o.EnPausa && o.Oleada > 0) textoOleada.text = $"OLEADA {o.Oleada + 1} EN {Mathf.CeilToInt(o.SegundosParaLaSiguiente)}{rec}";
+                else textoOleada.text = o.Oleada > 0 ? $"OLEADA {o.Oleada}{rec}" : "";
             }
 
             var mis = NAMision.Inst;

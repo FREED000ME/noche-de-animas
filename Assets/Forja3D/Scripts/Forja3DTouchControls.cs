@@ -2,7 +2,7 @@
 // Cada dedo recibe un papel al tocar la pantalla y lo conserva hasta soltarlo:
 //   · mitad izquierda  → joystick flotante (aparece donde pones el dedo)
 //   · botones          → ATACAR / CUBRIR (mantener) / ESQUIVAR / SALTAR / CORRER (alterna)
-//   · resto de la mitad derecha → girar la cámara
+//   · resto de la mitad derecha → girar la cámara (en modo disparo, también deslizando el dedo sobre un botón)
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -188,7 +188,8 @@ namespace Forja3D
                 Forja3DInput.JoystickTactil = v;
                 palanca.anchoredPosition = v * radioJoystick;
             }
-            else if (papel == Papel.Camara && t.phase == TouchPhase.Moved)
+            // En modo disparo, el dedo que mantiene un botón (DISPARAR, ACCIÓN, CORRER…) también gira la cámara al deslizarse
+            else if ((papel == Papel.Camara || (papel == Papel.Boton && Forja3DInput.ModoDisparo)) && t.phase == TouchPhase.Moved)
             {
                 // Independiente de la resolución: arrastrar toda la altura de la pantalla = sensibilidadCamara grados
                 Forja3DInput.MiradaTactil += t.deltaPosition / Mathf.Max(1, Screen.height) * sensibilidadCamara;

@@ -1,7 +1,7 @@
 # noche-de-animas
 Noche de Ánimas: supervivencia y horror para Android. De día los muertos duermen; de noche te buscan.
 
-## Noche de Ánimas: shooter de oleadas en primera persona (v0.4)
+## Noche de Ánimas: shooter de oleadas en primera persona (v0.5)
 
 Código propio en `Assets/NocheDeAnimas/Scripts` (todo hecho con piezas y sonidos sintetizados, 0 créditos):
 
@@ -18,5 +18,7 @@ Código propio en `Assets/NocheDeAnimas/Scripts` (todo hecho con piezas y sonido
 - **Casas por las que se entra** (`NACasas`, `NAAberturas`): paredes delgadas (H, G en la bodega) con puertas (D) y ventanas (V). Se abren y cierran con ACCIÓN, y se rompen a tiros, con explosiones o a golpes de los zombies. Las paredes se hornean en el NavMesh desde el constructor de niveles; las puertas y ventanas cerradas lo cortan, y los zombies encerrados las rompen. Por las ventanas se entra saltando.
 - **Aparición de zombies** (`NAOleadas`): dos de cada tres salen de dentro de las casas y se abren paso por puertas y ventanas; los demás salen de la tierra. Ninguno aparece encima de un muro.
 - **Salida** (`NASalida`): portón con arco de cempasúchil, letrero con el mapa siguiente y una columna de luz (roja con candado, dorada con la llave).
+- **Efectos y menús** (`NAEfectos`): los zombies revientan (trozos y mancha de sangre), las frutas de los puestos estallan de un tiro, pantalla roja al morir, botón de pausa (continuar, reiniciar, elegir nivel, menú principal) y récord de oleadas por nivel (también en el selector del título).
+- **Controles táctiles**: el dedo que mantiene DISPARAR, ACCIÓN o CORRER también gira la cámara al deslizarse.
 - **Pueblo** (`NAEscenografia`, `tools/mapas.py`): casas de adobe, puestos, tumbas, faroles, papel picado e iglesia con campanario, levantados sobre el mapa de texto. `python3 tools/mapas.py` regenera los JSON de nivel y `NAMapas.cs`.
 - Controles táctiles: DISPARAR (mantener) · RECARGAR · ARMA · SALTAR · CORRER · ACCIÓN (mantener). PC: ratón · clic · R · Tab o 1-6 · espacio · F.
